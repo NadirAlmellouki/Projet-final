@@ -1,0 +1,503 @@
+{
+  "info": {
+    "name": "StudySync API (fusionné)",
+    "description": "Collection complète après merge des 4 membres.\n\nPrérequis:\n1. npm run db:seed:test\n2. npm run dev\n3. Mot de passe: Password123\n\nVariables: baseUrl, token, adminToken, moderatorToken",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "moderatorToken", "value": "" },
+    { "key": "userIdSara", "value": "00000000-0000-0000-0000-000000000004" },
+    { "key": "userIdJean", "value": "00000000-0000-0000-0000-000000000005" },
+    { "key": "sessionCompleted", "value": "aaaaaaaa-0000-0000-0000-000000000001" },
+    { "key": "sessionActive", "value": "aaaaaaaa-0000-0000-0000-000000000002" },
+    { "key": "sessionCancelled", "value": "aaaaaaaa-0000-0000-0000-000000000004" },
+    { "key": "messageId", "value": "bbbbbbbb-0000-0000-0000-000000000003" },
+    { "key": "reportPending", "value": "cccccccc-0000-0000-0000-000000000001" }
+  ],
+  "item": [
+    {
+      "name": "0 - Setup",
+      "item": [
+        {
+          "name": "Health check",
+          "request": { "method": "GET", "url": "{{baseUrl}}/" }
+        },
+        {
+          "name": "API + DB health",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/health" }
+        }
+      ]
+    },
+    {
+      "name": "1 - Auth",
+      "item": [
+        {
+          "name": "Register student",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Test\",\n  \"last_name\": \"User\",\n  \"email\": \"test.user@univ.ma\",\n  \"password\": \"Password123\",\n  \"university\": \"UM5\",\n  \"major\": \"Info\",\n  \"year\": 2\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register"
+          }
+        },
+        {
+          "name": "Login Sara (student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.data?.token) pm.collectionVariables.set('token', j.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sara@univ.ma\",\n  \"password\": \"Password123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.data?.token) pm.collectionVariables.set('adminToken', j.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@studysync.ma\",\n  \"password\": \"Password123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/admin/login"
+          }
+        },
+        {
+          "name": "Login Moderator",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.data?.token) pm.collectionVariables.set('moderatorToken', j.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"moderator@studysync.ma\",\n  \"password\": \"Password123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Get me (auth)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - Users (membre 2)",
+      "item": [
+        {
+          "name": "GET /users/me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/users/me"
+          }
+        },
+        {
+          "name": "PUT /users/me",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Étudiante en informatique\",\n  \"major\": \"Informatique\"\n}"
+            },
+            "url": "{{baseUrl}}/api/users/me"
+          }
+        },
+        {
+          "name": "GET public profile",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/users/{{userIdJean}}" }
+        },
+        {
+          "name": "POST block user",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"blockedUserId\": \"{{userIdJean}}\"\n}" },
+            "url": "{{baseUrl}}/api/users/block"
+          }
+        },
+        {
+          "name": "GET blocked list",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/users/blocked"
+          }
+        },
+        {
+          "name": "DELETE unblock",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/users/block/{{userIdJean}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 - Sessions (membre 1)",
+      "item": [
+        {
+          "name": "List sessions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/sessions?latitude=33.9716&longitude=-6.8498&radius=10"
+          }
+        },
+        {
+          "name": "My sessions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/sessions/mine"
+          }
+        },
+        {
+          "name": "Create session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"React Native\",\n  \"topic\": \"Navigation\",\n  \"location_name\": \"Bibliothèque\",\n  \"start_time\": \"2026-06-15T14:00:00.000Z\",\n  \"duration_minutes\": 90,\n  \"max_participants\": 4,\n  \"latitude\": 33.9716,\n  \"longitude\": -6.8498\n}"
+            },
+            "url": "{{baseUrl}}/api/sessions"
+          }
+        },
+        {
+          "name": "Get session by id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/sessions/{{sessionCompleted}}"
+          }
+        },
+        {
+          "name": "Join session",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/sessions/{{sessionActive}}/join"
+          }
+        },
+        {
+          "name": "Check-in session",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/sessions/{{sessionActive}}/checkin"
+          }
+        },
+        {
+          "name": "Rate session (route sessions)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rated_id\": \"{{userIdJean}}\",\n  \"overall_rating\": 5,\n  \"punctuality_rating\": 5,\n  \"engagement_rating\": 4,\n  \"would_study_again\": true,\n  \"comment\": \"Bonne session\"\n}"
+            },
+            "url": "{{baseUrl}}/api/sessions/{{sessionCompleted}}/rate"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 - Matching (membre 3)",
+      "item": [
+        {
+          "name": "Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/matches/recommend?latitude=33.9716&longitude=-6.8498&radius=5"
+          }
+        },
+        {
+          "name": "Match score",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/matches/score/{{sessionCompleted}}?latitude=33.9716&longitude=-6.8498"
+          }
+        },
+        {
+          "name": "Nearby sessions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/matches/nearby-sessions?latitude=33.9716&longitude=-6.8498"
+          }
+        },
+        {
+          "name": "Heatmap",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/matches/heatmap?latitude=33.9716&longitude=-6.8498"
+          }
+        },
+        {
+          "name": "Distance rings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/matches/distance-rings?latitude=33.9716&longitude=-6.8498"
+          }
+        },
+        {
+          "name": "Check-in verify geofence",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionActive}}\",\n  \"latitude\": 33.98,\n  \"longitude\": -6.86\n}"
+            },
+            "url": "{{baseUrl}}/api/matches/checkin-verify"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 - Locations (membre 3)",
+      "item": [
+        {
+          "name": "Save location",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ma bibliothèque\",\n  \"latitude\": 33.9716,\n  \"longitude\": -6.8498\n}"
+            },
+            "url": "{{baseUrl}}/api/locations/saved"
+          }
+        },
+        {
+          "name": "List saved locations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/locations/saved"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 - Ratings (membre 4)",
+      "item": [
+        {
+          "name": "Create rating",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"{{sessionCompleted}}\",\n  \"rated_id\": \"{{userIdJean}}\",\n  \"score\": 5\n}"
+            },
+            "url": "{{baseUrl}}/api/ratings"
+          }
+        },
+        {
+          "name": "Get user ratings",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/ratings/user/{{userIdJean}}" }
+        }
+      ]
+    },
+    {
+      "name": "7 - Reports (membre 4)",
+      "item": [
+        {
+          "name": "Create report (user)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reported_user_id\": \"{{userIdJean}}\",\n  \"reason\": \"harassment\",\n  \"description\": \"Test signalement\"\n}"
+            },
+            "url": "{{baseUrl}}/api/reports"
+          }
+        },
+        {
+          "name": "List reports (moderator)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{moderatorToken}}" }],
+            "url": "{{baseUrl}}/api/reports?status=pending"
+          }
+        },
+        {
+          "name": "Resolve report",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{moderatorToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"resolved\",\n  \"reason\": \"Action prise après vérification\"\n}"
+            },
+            "url": "{{baseUrl}}/api/reports/{{reportPending}}/resolve"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8 - Admin (membre 4)",
+      "item": [
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/admin/users?page=1&limit=10&q=sara"
+          }
+        },
+        {
+          "name": "User detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/admin/users/{{userIdJean}}"
+          }
+        },
+        {
+          "name": "Suspend user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"suspended_until\": \"2026-06-15T12:00:00.000Z\",\n  \"reason\": \"Test suspension\"\n}"
+            },
+            "url": "{{baseUrl}}/api/admin/users/{{userIdJean}}/suspend"
+          }
+        },
+        {
+          "name": "Unsuspend user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Fin de suspension\"\n}" },
+            "url": "{{baseUrl}}/api/admin/users/{{userIdJean}}/unsuspend"
+          }
+        },
+        {
+          "name": "Ban user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Violation CGU\"\n}" },
+            "url": "{{baseUrl}}/api/admin/users/{{userIdJean}}/ban"
+          }
+        },
+        {
+          "name": "Delete session",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Session non conforme\"\n}" },
+            "url": "{{baseUrl}}/api/admin/sessions/{{sessionCancelled}}"
+          }
+        },
+        {
+          "name": "Delete message (soft)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Contenu inapproprié\"\n}" },
+            "url": "{{baseUrl}}/api/admin/messages/{{messageId}}/delete"
+          }
+        }
+      ]
+    }
+  ]
+}

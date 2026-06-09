@@ -1,0 +1,42 @@
+{
+  "name": "studysync_back",
+  "version": "1.0.0",
+  "description": "StudySync backend API — Express, PostgreSQL, JWT",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "db:setup": "node scripts/run-sql.js",
+    "db:seed": "sequelize-cli db:seed:all --env development",
+    "db:seed:undo": "sequelize-cli db:seed:undo:all --env development",
+    "db:verify": "node scripts/verify-data.js",
+    "test:all": "node scripts/test-all.js",
+    "test:api": "node scripts/test-api-integration.js",
+    "test:admin": "node scripts/test-admin-endpoints.js",
+    "test:roles": "node scripts/verify-roles.js",
+    "db:seed:test": "node scripts/seed-test-data.js",
+    "test": "node src/tests/matching.test.js",
+    "migrate": "node src/scripts/runMigration.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "google-auth-library": "^10.6.2",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^8.0.10",
+    "pg": "^8.20.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.8",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "sequelize-cli": "^6.6.5"
+  }
+}

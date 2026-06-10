@@ -85,10 +85,34 @@ class SessionRepositoryImpl implements SessionRepository {
   }
 
   @override
+  Future<StudySession> getSessionById(String id) async {
+    final response = await _api.get(ApiEndpoints.sessionById(id));
+    return _parseOne(response.data);
+  }
+
+  @override
   Future<void> joinSession(String sessionId, {String? message}) async {
     await _api.post(
       ApiEndpoints.sessionJoin(sessionId),
       data: {if (message != null) 'message': message},
+    );
+  }
+
+  @override
+  Future<void> submitRating({
+    required String sessionId,
+    required String rateeId,
+    required int score,
+    String? comment,
+  }) async {
+    await _api.post(
+      ApiEndpoints.ratingsSubmit,
+      data: {
+        'session_id': sessionId,
+        'ratee_id': rateeId,
+        'score': score,
+        if (comment != null && comment.isNotEmpty) 'comment': comment,
+      },
     );
   }
 

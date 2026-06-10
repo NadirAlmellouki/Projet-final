@@ -332,8 +332,7 @@ class _CreateSessionScreenState extends ConsumerState<CreateSessionScreen> {
                       children: [
                         const InputLabel('Durée (min)'),
                         DropdownButtonFormField<int>(
-                          key: ValueKey(_duration),
-                          initialValue: _duration,
+                          value: _duration,
                           items: const [30, 60, 90, 120]
                               .map(
                                 (v) => DropdownMenuItem(
@@ -354,8 +353,7 @@ class _CreateSessionScreenState extends ConsumerState<CreateSessionScreen> {
                       children: [
                         const InputLabel('Max participants'),
                         DropdownButtonFormField<int>(
-                          key: ValueKey(_maxParticipants),
-                          initialValue: _maxParticipants,
+                          value: _maxParticipants,
                           items: const [2, 4, 6, 8]
                               .map(
                                 (v) => DropdownMenuItem(

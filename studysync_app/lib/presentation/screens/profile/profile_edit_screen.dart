@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/image_upload_helper.dart';
 import '../../providers/app_providers.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common_widgets.dart';
@@ -20,6 +23,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   late final TextEditingController _universityCtrl;
   late final TextEditingController _majorCtrl;
   late final TextEditingController _bioCtrl;
+  String? _newPhotoBase64;
+  int? _selectedYear;
   bool _isSaving = false;
   String? _error;
 
@@ -27,11 +32,39 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   void initState() {
     super.initState();
     final user = ref.read(authProvider).user!;
+    _selectedYear = user.year;
     _firstNameCtrl = TextEditingController(text: user.firstName);
     _lastNameCtrl = TextEditingController(text: user.lastName);
     _universityCtrl = TextEditingController(text: user.university ?? '');
     _majorCtrl = TextEditingController(text: user.major ?? '');
     _bioCtrl = TextEditingController(text: user.bio ?? '');
+  }
+
+  Future<void> _pickPhoto() async {
+    final encoded = await ImageUploadHelper.pickAndEncodeImage();
+    if (encoded != null) setState(() => _newPhotoBase64 = encoded);
+  }
+
+  Widget _avatarChild() {
+    if (_newPhotoBase64 != null) {
+      return ClipOval(
+        child: Image.memory(
+          base64Decode(_newPhotoBase64!.split(',').last),
+          fit: BoxFit.cover,
+          width: 80,
+          height: 80,
+        ),
+      );
+    }
+    final user = ref.read(authProvider).user;
+    if (user?.profilePhoto != null && user!.profilePhoto!.isNotEmpty) {
+      final imageProvider = user.profilePhoto!.startsWith('data:')
+          ? MemoryImage(base64Decode(user.profilePhoto!.split(',').last))
+              as ImageProvider
+          : NetworkImage(user.profilePhoto!);
+      return CircleAvatar(radius: 40, backgroundImage: imageProvider);
+    }
+    return const Icon(Icons.person, color: AppColors.primary, size: 28);
   }
 
   @override
@@ -56,7 +89,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         'last_name': _lastNameCtrl.text.trim(),
         'university': _universityCtrl.text.trim(),
         'major': _majorCtrl.text.trim(),
+        if (_selectedYear != null) 'year': _selectedYear,
         'bio': _bioCtrl.text.trim(),
+        if (_newPhotoBase64 != null) 'profile_photo': _newPhotoBase64,
       });
       ref.read(authProvider.notifier).setUser(updated);
       if (mounted) context.pop();
@@ -96,6 +131,32 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         child: Column(
           children: [
             if (_error != null) ErrorBanner(message: _error!),
+            Center(
+              child: Column(
+                children: [
+                  GestureDetector(
+                    onTap: _pickPhoto,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryTint,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: const Color(0xFFC7D2FE), width: 3),
+                      ),
+                      child: _avatarChild(),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  TextButton(
+                    onPressed: _pickPhoto,
+                    child: const Text('Changer la photo'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -118,6 +179,27 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: InputLabel('Année'),
+            ),
+            DropdownButtonFormField<int>(
+              value: _selectedYear,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              ),
+              items: const [
+                DropdownMenuItem(value: 1, child: Text('L1')),
+                DropdownMenuItem(value: 2, child: Text('L2')),
+                DropdownMenuItem(value: 3, child: Text('L3')),
+                DropdownMenuItem(value: 4, child: Text('M1')),
+                DropdownMenuItem(value: 5, child: Text('M2')),
+              ],
+              onChanged: (v) => setState(() => _selectedYear = v),
             ),
             const SizedBox(height: 12),
             const Align(

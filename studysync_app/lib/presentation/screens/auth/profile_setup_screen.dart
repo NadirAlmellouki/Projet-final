@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/image_upload_helper.dart';
 import '../../providers/app_providers.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common_widgets.dart';
@@ -20,6 +23,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _universityCtrl = TextEditingController();
   final _majorCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
+  String? _profilePhotoBase64;
   int _year = 3;
   bool _isSaving = false;
   String? _error;
@@ -40,12 +44,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     super.dispose();
   }
 
-  Future<void> _save({bool skip = false}) async {
-    if (skip) {
-      if (mounted) context.go(AppRoutes.home);
-      return;
-    }
+  Future<void> _pickPhoto() async {
+    final encoded = await ImageUploadHelper.pickAndEncodeImage();
+    if (encoded != null) setState(() => _profilePhotoBase64 = encoded);
+  }
 
+  Future<void> _save() async {
     if (_universityCtrl.text.trim().isEmpty || _majorCtrl.text.trim().isEmpty) {
       setState(() => _error = 'Université et filière sont requises');
       return;
@@ -63,6 +67,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         'major': _majorCtrl.text.trim(),
         'year': _year,
         if (_bioCtrl.text.trim().isNotEmpty) 'bio': _bioCtrl.text.trim(),
+        if (_profilePhotoBase64 != null) 'profile_photo': _profilePhotoBase64,
       });
       ref.read(authProvider.notifier).setUser(updated);
       if (mounted) context.go(AppRoutes.home);
@@ -88,12 +93,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => _save(skip: true),
-            child: const Text('Ignorer'),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -115,15 +114,29 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               child: Column(
                 children: [
                   if (_error != null) ErrorBanner(message: _error!),
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryTint,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFC7D2FE), width: 3),
+                  GestureDetector(
+                    onTap: _pickPhoto,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryTint,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFFC7D2FE), width: 3),
+                      ),
+                      child: _profilePhotoBase64 != null
+                          ? ClipOval(
+                              child: Image.memory(
+                                base64Decode(
+                                    _profilePhotoBase64!.split(',').last),
+                                fit: BoxFit.cover,
+                                width: 80,
+                                height: 80,
+                              ),
+                            )
+                          : const Icon(Icons.add_a_photo,
+                              color: AppColors.primary, size: 28),
                     ),
-                    child: const Icon(Icons.add, color: AppColors.primary, size: 28),
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -156,8 +169,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     child: InputLabel('Année d\'études'),
                   ),
                   DropdownButtonFormField<int>(
-                    key: ValueKey(_year),
-                    initialValue: _year,
+                    value: _year,
                     decoration: const InputDecoration(),
                     items: _yearOptions.entries
                         .map(

@@ -10,7 +10,11 @@ import '../../providers/app_providers.dart';
 import '../../../domain/entities/chat_message.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/home_provider.dart';
+<<<<<<< HEAD
 import '../../widgets/report_sheet.dart';
+=======
+import '../../widgets/rating_dialog.dart';
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
 
 class ChatRoomScreen extends ConsumerStatefulWidget {
   const ChatRoomScreen({
@@ -87,6 +91,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     });
   }
 
+<<<<<<< HEAD
   Future<void> _reportSession() async {
     final sent = await ReportSheet.show(
       context,
@@ -115,6 +120,53 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         const SnackBar(content: Text('Signalement envoyé. Merci.')),
       );
     }
+=======
+  void _openRatingDialog() {
+    final currentUserId = ref.read(authProvider).user?.id ?? '';
+    final messages = ref.read(chatRoomProvider(widget.sessionId)).messages;
+    final participants = <String, String>{};
+    for (final m in messages) {
+      if (m.senderId != currentUserId) {
+        participants[m.senderId] = m.senderName;
+      }
+    }
+    if (participants.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Aucun autre participant à noter')),
+      );
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Noter un participant',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+            ...participants.entries.map((e) => ListTile(
+                  leading: const Icon(Icons.person),
+                  title: Text(e.value),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    showDialog(
+                      context: context,
+                      builder: (_) => RatingDialog(
+                        sessionId: widget.sessionId,
+                        rateeId: e.key,
+                        rateeName: e.value,
+                      ),
+                    );
+                  },
+                )),
+          ],
+        ),
+      ),
+    );
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
   }
 
   Future<void> _send() async {
@@ -196,7 +248,16 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
             ],
           ),
           IconButton(
+<<<<<<< HEAD
             icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+=======
+            icon: const Icon(Icons.star_outline),
+            tooltip: 'Noter un participant',
+            onPressed: _openRatingDialog,
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
             onPressed: () =>
                 ref.read(chatRoomProvider(widget.sessionId).notifier).load(),
           ),

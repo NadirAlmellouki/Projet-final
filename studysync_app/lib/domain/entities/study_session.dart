@@ -5,6 +5,7 @@ class StudySession {
     required this.id,
     required this.subject,
     this.topic,
+    this.description,
     this.locationName,
     this.startTime,
     this.durationMinutes = 60,
@@ -24,6 +25,7 @@ class StudySession {
   final String id;
   final String subject;
   final String? topic;
+  final String? description;
   final String? locationName;
   final DateTime? startTime;
   final int durationMinutes;

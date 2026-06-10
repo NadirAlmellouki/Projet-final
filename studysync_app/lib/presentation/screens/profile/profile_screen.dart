@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../domain/entities/user.dart';
 import '../../providers/app_providers.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/home_provider.dart';
@@ -30,6 +33,69 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final user = await ref.read(userRepositoryProvider).getProfile();
       ref.read(authProvider.notifier).setUser(user);
     } catch (_) {}
+  }
+
+  Widget _buildAvatar(User user) {
+    if (user.profilePhoto != null && user.profilePhoto!.isNotEmpty) {
+      final imageProvider = user.profilePhoto!.startsWith('data:')
+          ? MemoryImage(base64Decode(user.profilePhoto!.split(',').last))
+              as ImageProvider
+          : NetworkImage(user.profilePhoto!);
+      return CircleAvatar(
+        radius: 36,
+        backgroundImage: imageProvider,
+      );
+    }
+    return UserAvatar(
+      initials: user.initials,
+      size: 72,
+      backgroundColor: Colors.white.withValues(alpha: 0.2),
+      foregroundColor: Colors.white,
+    );
+  }
+
+  void _openSettings() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Modifier le profil'),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.push(AppRoutes.profileEdit);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.lock),
+              title: const Text('Changer le mot de passe'),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.push(AppRoutes.forgotPassword);
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: AppColors.error),
+              title: const Text('Se déconnecter',
+                  style: TextStyle(color: AppColors.error)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _logout();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.close),
+              title: const Text('Annuler'),
+              onTap: () => Navigator.pop(ctx),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _logout() async {
@@ -75,6 +141,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final trustDisplay = user.trustScore != null && user.trustScore! > 0
         ? '${user.trustScore!.toStringAsFixed(1)}/5'
         : '—';
+    final avgRating = stats.averageRating;
+    final avgDisplay =
+        avgRating != null && avgRating > 0 ? '${avgRating.toStringAsFixed(1)}★' : '—';
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -92,11 +161,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+<<<<<<< HEAD
                     TextButton.icon(
                       onPressed: _logout,
                       icon: const Icon(Icons.logout_rounded, size: 18),
                       label: const Text('Déconnexion'),
                       style: TextButton.styleFrom(
+=======
+                    OutlinedButton(
+                      onPressed: _openSettings,
+                      style: OutlinedButton.styleFrom(
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
                         foregroundColor: Colors.white,
                         backgroundColor: Colors.white.withValues(alpha: 0.15),
                       ),
@@ -106,6 +181,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
+<<<<<<< HEAD
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
@@ -122,6 +198,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         foregroundColor: Colors.white,
                       ),
                     ),
+=======
+                    _buildAvatar(user),
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
                     Positioned(
                       bottom: 4,
                       right: 4,
@@ -194,10 +273,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                       const SizedBox(width: 10),
                       Expanded(
+<<<<<<< HEAD
                         child: OutlinedButton.icon(
                           onPressed: () {},
                           icon: const Icon(Icons.event_note_rounded, size: 18),
                           label: const Text('Sessions'),
+=======
+                        child: OutlinedButton(
+                          onPressed: () => context.push(AppRoutes.mySessions),
+                          child: const Text('Mes sessions'),
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
                         ),
                       ),
                     ],
@@ -218,9 +303,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         accentIndex: 0,
                       ),
                       StatCard(
-                        value: user.trustScore != null && user.trustScore! > 0
-                            ? '${user.trustScore!.toStringAsFixed(1)}★'
-                            : '—',
+                        value: stats.isLoading ? '…' : avgDisplay,
                         label: 'Note',
                         icon: Icons.star_rounded,
                         accentIndex: 1,
@@ -237,6 +320,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         icon: Icons.people_rounded,
                         accentIndex: 3,
                       ),
+<<<<<<< HEAD
+=======
+                      StatCard(
+                        value: stats.isLoading ? '…' : trustDisplay,
+                        label: 'Trust',
+                      ),
+                      StatCard(
+                        value: stats.isLoading
+                            ? '…'
+                            : '${stats.partnersCount}',
+                        label: 'Partenaires',
+                      ),
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
                     ],
                   ),
                   const SizedBox(height: 14),

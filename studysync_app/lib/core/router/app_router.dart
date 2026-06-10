@@ -14,8 +14,11 @@ import '../../presentation/screens/onboarding/onboarding_screen.dart';
 import '../../presentation/screens/profile/profile_edit_screen.dart';
 import '../../presentation/screens/rating/rating_screen.dart';
 import '../../presentation/screens/sessions/create_session_screen.dart';
+import '../../presentation/screens/sessions/my_sessions_screen.dart';
+import '../../presentation/screens/sessions/session_detail_screen.dart';
 import '../../presentation/screens/shell/main_shell_screen.dart';
 import '../../presentation/screens/splash/splash_screen.dart';
+import '../../domain/entities/study_session.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -31,7 +34,12 @@ class AppRoutes {
   static const home = '/home';
   static const createSession = '/create-session';
   static const chatRoom = '/chat';
+<<<<<<< HEAD
   static const rating = '/rating';
+=======
+  static const sessionDetail = '/session';
+  static const mySessions = '/my-sessions';
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
   static const profile = '/profile';
   static const profileEdit = '/profile-edit';
 }
@@ -146,6 +154,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+<<<<<<< HEAD
         path: '${AppRoutes.rating}/:sessionId',
         builder: (context, state) {
           final id = state.pathParameters['sessionId']!;
@@ -154,6 +163,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+=======
+        path: '${AppRoutes.sessionDetail}/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          final session = state.extra as StudySession?;
+          return SessionDetailScreen(sessionId: id, session: session);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.mySessions,
+        builder: (_, __) => const MySessionsScreen(),
+      ),
+      GoRoute(
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
         path: AppRoutes.profileEdit,
         builder: (_, __) => const ProfileEditScreen(),
       ),

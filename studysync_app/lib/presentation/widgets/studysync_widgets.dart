@@ -116,8 +116,12 @@ class SessionCard extends StatelessWidget {
     this.isActiveNow = false,
     this.memberRole = SessionMemberRole.none,
     this.onJoin,
+<<<<<<< HEAD
     this.onOpenChat,
     this.onReport,
+=======
+    this.onTap,
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
   });
 
   final String creatorInitials;
@@ -129,6 +133,7 @@ class SessionCard extends StatelessWidget {
   final bool isActiveNow;
   final SessionMemberRole memberRole;
   final VoidCallback? onJoin;
+<<<<<<< HEAD
   final VoidCallback? onOpenChat;
   final VoidCallback? onReport;
 
@@ -653,6 +658,99 @@ class ChatSessionTile extends StatelessWidget {
           else
             const Icon(Icons.chevron_right, color: AppColors.text3, size: 22),
         ],
+=======
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border, width: 0.5),
+          boxShadow: const [
+            BoxShadow(color: Color(0x14000000), blurRadius: 3, offset: Offset(0, 1)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      UserAvatar(initials: creatorInitials),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              creatorName,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.text1,
+                              ),
+                            ),
+                            Text(
+                              subtitle,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.text3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (matchScore != null) MatchScoreBadge(score: matchScore!),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 5,
+              runSpacing: 5,
+              children: [
+                SessionChip(label: subject, variant: ChipVariant.primary),
+                if (distanceKm != null)
+                  SessionChip(
+                    label: '📍 ${distanceKm!.toStringAsFixed(1)} km',
+                    variant: ChipVariant.gray,
+                  ),
+                if (isActiveNow)
+                  const SessionChip(label: 'Maintenant', variant: ChipVariant.green),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                SizedBox(
+                  height: 32,
+                  child: ElevatedButton(
+                    onPressed: onJoin,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(80, 32),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      textStyle: const TextStyle(fontSize: 12),
+                    ),
+                    child: const Text('Rejoindre'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
       ),
     );
   }

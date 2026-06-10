@@ -1,10 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
+<<<<<<< HEAD
 import '../../../domain/entities/study_session.dart';
+=======
+import '../../providers/auth_provider.dart';
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
 import '../../providers/home_provider.dart';
 import '../../widgets/report_sheet.dart';
 import '../../widgets/studysync_widgets.dart';
@@ -18,6 +24,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchCtrl = TextEditingController();
+  Timer? _debounce;
+  String _searchText = '';
 
   @override
   void initState() {
@@ -29,8 +37,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged(String v) {
+    setState(() => _searchText = v);
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      ref.read(homeFeedProvider.notifier).setSearchQuery(v);
+    });
+  }
+
+  void _clearSearch() {
+    _searchCtrl.clear();
+    setState(() => _searchText = '');
+    ref.read(homeFeedProvider.notifier).setSearchQuery('');
   }
 
   Future<void> _openCreate() async {
@@ -72,6 +95,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final feed = ref.watch(homeFeedProvider);
+    final user = ref.watch(authProvider).user;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -85,20 +109,51 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
+<<<<<<< HEAD
             const ScreenHeroHeader(
               eyebrow: 'Bonjour 👋',
               title: 'Sessions près de vous',
               icon: Icons.explore_rounded,
+=======
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Bonjour, ${user?.firstName ?? ''} 👋',
+                          style: const TextStyle(fontSize: 12, color: AppColors.text3),
+                        ),
+                        Text(
+                          'Découvrir',
+                          style: Theme.of(context).appBarTheme.titleTextStyle,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextField(
                 controller: _searchCtrl,
+                onChanged: _onSearchChanged,
                 onSubmitted: (v) =>
                     ref.read(homeFeedProvider.notifier).setSearchQuery(v),
                 decoration: InputDecoration(
                   hintText: 'Calcul, Biologie, CS101...',
                   prefixIcon: const Icon(Icons.search, size: 20),
+                  suffixIcon: _searchText.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 18),
+                          onPressed: _clearSearch,
+                        )
+                      : null,
                   filled: true,
                   fillColor: AppColors.white,
                   contentPadding: const EdgeInsets.symmetric(vertical: 0),
@@ -188,6 +243,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             matchScore: session.matchScore,
             distanceKm: session.distanceKm,
             isActiveNow: session.isActiveNow,
+<<<<<<< HEAD
             memberRole: session.memberRole,
             onJoin: session.isParticipant
                 ? null
@@ -201,6 +257,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             onReport: session.isParticipant
                 ? () => _reportSession(session)
                 : null,
+=======
+            onJoin: () => _join(session.id, session.subject),
+            onTap: () => context.push('${AppRoutes.sessionDetail}/${session.id}', extra: session),
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
           );
         },
       ),

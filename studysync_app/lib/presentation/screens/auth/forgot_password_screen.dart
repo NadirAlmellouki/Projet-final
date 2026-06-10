@@ -25,6 +25,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     super.dispose();
   }
 
+  void _goBack() {
+    final isAuthenticated =
+        ref.read(authProvider).status == AuthStatus.authenticated;
+    if (isAuthenticated) {
+      context.pop();
+    } else {
+      context.go(AppRoutes.login);
+    }
+  }
+
   Future<void> _sendLink() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -78,7 +88,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
-                context.go(AppRoutes.login);
+                _goBack();
               },
               child: const Text('Retour à la connexion'),
             ),
@@ -110,7 +120,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 GhostButton(
                   label: '← Retour',
                   light: true,
-                  onPressed: () => context.go(AppRoutes.login),
+                  onPressed: _goBack,
                 ),
                 const SizedBox(height: 20),
                 Center(
@@ -163,7 +173,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       Center(
                         child: LinkTextButton(
                           label: 'Retour à la connexion',
-                          onPressed: () => context.go(AppRoutes.login),
+                          onPressed: _goBack,
                         ),
                       ),
                     ],

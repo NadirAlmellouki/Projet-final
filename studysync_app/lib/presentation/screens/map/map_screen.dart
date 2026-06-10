@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+<<<<<<< HEAD
 import 'package:google_fonts/google_fonts.dart';
+=======
+import 'package:intl/intl.dart';
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/router/app_router.dart';
@@ -262,12 +266,90 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ...sessionsWithLoc.map(
                     (s) => Marker(
                       point: LatLng(s.latitude!, s.longitude!),
+<<<<<<< HEAD
                       width: 52,
                       height: 62,
                       alignment: Alignment.topCenter,
                       child: GestureDetector(
                         onTap: () => _showSessionSheet(s),
                         child: _SessionMapPin(session: s),
+=======
+                      width: 44,
+                      height: 44,
+                        child: GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet<void>(
+                              context: context,
+                              builder: (ctx) => Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(s.subject,
+                                        style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold)),
+                                    if (s.topic != null)
+                                      Text(s.topic!,
+                                          style: const TextStyle(
+                                              color: AppColors.text2)),
+                                    if (s.locationName != null)
+                                      Row(children: [
+                                        const Icon(Icons.place, size: 14),
+                                        Text(s.locationName!)
+                                      ]),
+                                    if (s.startTime != null)
+                                      Text(DateFormat("dd/MM 'à' HH:mm")
+                                          .format(s.startTime!)),
+                                    Text(
+                                        '${s.participantCount ?? 1} / ${s.maxParticipants} participants'),
+                                    const SizedBox(height: 16),
+                                    Row(children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: () {
+                                            Navigator.pop(ctx);
+                                            context.push(
+                                                '${AppRoutes.sessionDetail}/${s.id}',
+                                                extra: s);
+                                          },
+                                          child:
+                                              const Text('Voir détails'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.pop(ctx);
+                                            context.push(
+                                              '${AppRoutes.chatRoom}/${s.id}',
+                                              extra: s.subject,
+                                            );
+                                          },
+                                          child: const Text('Ouvrir le chat'),
+                                        ),
+                                      ),
+                                    ]),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.school,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
                       ),
                     ),
                   ),

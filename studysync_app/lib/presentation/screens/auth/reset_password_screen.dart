@@ -89,38 +89,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       );
     }
 
-    if (widget.token.isEmpty) {
-      return AuthScaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: AuthFormCard(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Lien invalide ou expiré',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Demandez un nouveau lien depuis la page '
-                    '« Mot de passe oublié ».',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  PrimaryButton(
-                    label: 'Mot de passe oublié',
-                    onPressed: () => context.go(AppRoutes.forgotPassword),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
     return AuthScaffold(
       body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

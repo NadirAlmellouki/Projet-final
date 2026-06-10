@@ -16,6 +16,7 @@ class ApiEndpoints {
   static String sessionJoin(String id) => '/api/sessions/$id/join';
   static String sessionById(String id) => '/api/sessions/$id';
 
+  static const ratingsSubmit = '/api/ratings';
   static const matchesRecommend = '/api/matches/recommend';
   static const matchesNearby = '/api/matches/nearby-sessions';
   static const matchesHeatmap = '/api/matches/heatmap';

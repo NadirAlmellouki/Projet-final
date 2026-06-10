@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
+import '../../core/config/app_config.dart';
 import '../../core/utils/location_helper.dart';
+import '../../data/models/chat_message_model.dart';
 import 'auth_provider.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/entities/session_member_role.dart';
@@ -265,15 +268,71 @@ class ChatRoomNotifier extends StateNotifier<ChatRoomState> {
   final Ref _ref;
   final String sessionId;
   Timer? _pollTimer;
+  io.Socket? _socket;
+  bool _disposed = false;
 
   void startPolling() {
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => load(silent: true));
+    _connectSocket();
   }
 
   void stopPolling() {
+    _disposed = true;
     _pollTimer?.cancel();
     _pollTimer = null;
+    final s = _socket;
+    _socket = null;
+    s?.disconnect();
+  }
+
+  void _connectSocket() {
+    try {
+      final tokenStorage = _ref.read(tokenStorageProvider);
+      tokenStorage.readToken().then((token) {
+        if (_disposed) return;
+        final socket = io.io(AppConfig.baseUrl, <String, dynamic>{
+          'transports': ['websocket'],
+          'autoConnect': false,
+          'auth': {'token': token},
+        });
+        _socket = socket;
+        socket.connect();
+        socket.emit('join_session', {'session_id': sessionId});
+        socket.on('new_message', (data) {
+          if (_disposed) return;
+          if (data is Map) {
+            try {
+              final msg = ChatMessageModel.fromJson(
+                  Map<String, dynamic>.from(data));
+              if (!state.messages.any((m) => m.id == msg.id)) {
+                state = ChatRoomState(messages: [...state.messages, msg]);
+              }
+            } catch (_) {}
+          }
+        });
+        socket.onDisconnect((_) {
+          if (_disposed) return;
+          _startFallbackPolling();
+        });
+        socket.onConnectError((_) {
+          if (_disposed) return;
+          _startFallbackPolling();
+        });
+      });
+    } catch (_) {
+      if (!_disposed) _startFallbackPolling();
+    }
+  }
+
+  void _startFallbackPolling() {
+    _pollTimer?.cancel();
+    _pollTimer =
+        Timer.periodic(const Duration(seconds: 5), (_) {
+          if (_disposed) {
+            _pollTimer?.cancel();
+            return;
+          }
+          load(silent: true);
+        });
   }
 
   @override
@@ -283,14 +342,17 @@ class ChatRoomNotifier extends StateNotifier<ChatRoomState> {
   }
 
   Future<void> load({bool silent = false}) async {
+    if (_disposed) return;
     if (!silent) {
       state = ChatRoomState(messages: state.messages, isLoading: true);
     }
     try {
       final messages =
           await _ref.read(chatRepositoryProvider).getMessages(sessionId);
+      if (_disposed) return;
       state = ChatRoomState(messages: messages);
     } catch (e) {
+      if (_disposed) return;
       if (!silent) {
         state = ChatRoomState(errorMessage: e.toString());
       }
@@ -298,14 +360,17 @@ class ChatRoomNotifier extends StateNotifier<ChatRoomState> {
   }
 
   Future<bool> send(String content) async {
+    if (_disposed) return false;
     state = ChatRoomState(messages: state.messages, isSending: true);
     try {
       final msg =
           await _ref.read(chatRepositoryProvider).sendMessage(sessionId, content);
+      if (_disposed) return false;
       state = ChatRoomState(messages: [...state.messages, msg]);
       await load(silent: true);
       return true;
     } catch (e) {
+      if (_disposed) return false;
       state = ChatRoomState(
         messages: state.messages,
         errorMessage: e.toString().replaceFirst('Exception: ', ''),
@@ -362,11 +427,17 @@ final statsProvider =
 class ProfileStatsState {
   const ProfileStatsState({
     this.sessionCount = 0,
+    this.partnersCount = 0,
+    this.averageRating,
+    this.ratingCount = 0,
     this.isLoading = false,
     this.errorMessage,
   });
 
   final int sessionCount;
+  final int partnersCount;
+  final double? averageRating;
+  final int ratingCount;
   final bool isLoading;
   final String? errorMessage;
 }
@@ -379,9 +450,23 @@ class ProfileStatsNotifier extends StateNotifier<ProfileStatsState> {
   Future<void> load() async {
     state = const ProfileStatsState(isLoading: true);
     try {
-      final sessions =
-          await _ref.read(sessionRepositoryProvider).getMySessions();
-      state = ProfileStatsState(sessionCount: sessions.length);
+      final userId = _ref.read(authProvider).user?.id;
+      if (userId == null) {
+        state = const ProfileStatsState();
+        return;
+      }
+      final user = _ref.read(authProvider).user;
+      final stats = await _ref.read(statsRepositoryProvider).getUserStats(
+            userId,
+            trustScore: user?.trustScore,
+          );
+      state = ProfileStatsState(
+        sessionCount: stats.sessionCount,
+        partnersCount: stats.partnersCount,
+        averageRating: stats.averageRating,
+        ratingCount: stats.ratingCount,
+        isLoading: false,
+      );
     } catch (e) {
       state = ProfileStatsState(errorMessage: e.toString());
     }

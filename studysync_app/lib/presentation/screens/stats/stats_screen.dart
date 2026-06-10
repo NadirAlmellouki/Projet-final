@@ -150,6 +150,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                           ),
                         ),
                       ),
+<<<<<<< HEAD
                       const SizedBox(height: 16),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -161,6 +162,77 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                             label: const Text('Actualiser'),
                           ),
                         ),
+=======
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user?.fullName ?? '',
+                      style: const TextStyle(color: AppColors.text2),
+                    ),
+                    const SizedBox(height: 16),
+                    Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StatCard(
+                                value: '${stats?.sessionCount ?? 0}',
+                                label: 'Mes sessions',
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: StatCard(
+                                value: stats?.averageRating != null &&
+                                        stats!.averageRating! > 0
+                                    ? '${stats.averageRating!.toStringAsFixed(1)}★'
+                                    : '—',
+                                label: 'Note moyenne',
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StatCard(
+                                value: '${stats?.ratingCount ?? 0}',
+                                label: 'Avis reçus',
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: StatCard(
+                                value: trustLabel,
+                                label: 'Trust score',
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StatCard(
+                                value: '${stats?.partnersCount ?? 0}',
+                                label: 'Partenaires',
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Expanded(child: SizedBox()),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: state.isLoading ? null : _reload,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Actualiser'),
+>>>>>>> 11b14c6 (nadir lah yehdik rah mashi lfront dyali hadik)
                       ),
                       const SizedBox(height: 24),
                     ],

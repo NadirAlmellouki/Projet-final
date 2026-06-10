@@ -4,18 +4,46 @@ import Rating from "../models/Rating.js";
 import StudySession from "../models/StudySession.js";
 import User from "../models/User.js";
 
+const parseOptionalScore = (value, label) => {
+  if (value == null) return null;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1 || n > 5) {
+    throw new Error(`INVALID_${label}`);
+  }
+  return n;
+};
+
 const createRating = async (req, res) => {
-  const { session_id, rated_id, score } = req.body;
+  const {
+    session_id,
+    rated_id,
+    score,
+    overall_score: overallScoreBody,
+    punctuality_score,
+    engagement_score,
+    would_study_again,
+    comment,
+  } = req.body;
   const rater_id = req.user.id ?? req.user.userId;
 
-  if (!session_id || !rated_id || score == null) {
+  const rawScore = score ?? overallScoreBody;
+  if (!session_id || !rated_id || rawScore == null) {
     return res.status(400).json({ message: "session_id, rated_id and score are required" });
   }
 
-  if (!Number.isInteger(score) || score < 1 || score > 5) {
+  if (!Number.isInteger(rawScore) || rawScore < 1 || rawScore > 5) {
     return res.status(400).json({ message: "score must be an integer between 1 and 5" });
   }
-  const overall_score = score;
+  const overall_score = rawScore;
+
+  let punctualityScore;
+  let engagementScore;
+  try {
+    punctualityScore = parseOptionalScore(punctuality_score, "PUNCTUALITY");
+    engagementScore = parseOptionalScore(engagement_score, "ENGAGEMENT");
+  } catch {
+    return res.status(400).json({ message: "sub-scores must be integers between 1 and 5" });
+  }
 
   if (rater_id === rated_id) {
     return res.status(400).json({ message: "you cannot rate yourself" });
@@ -53,7 +81,16 @@ const createRating = async (req, res) => {
 
   const result = await sequelize.transaction(async (t) => {
     const createdRating = await Rating.create(
-      { rater_id, rated_id, session_id, overall_score },
+      {
+        rater_id,
+        rated_id,
+        session_id,
+        overall_score,
+        punctuality_score: punctualityScore,
+        engagement_score: engagementScore,
+        would_study_again: would_study_again ?? null,
+        comment: comment?.trim() || null,
+      },
       { transaction: t },
     );
 

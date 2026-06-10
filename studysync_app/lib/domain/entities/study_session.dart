@@ -1,3 +1,5 @@
+import 'session_member_role.dart';
+
 class StudySession {
   const StudySession({
     required this.id,
@@ -8,6 +10,7 @@ class StudySession {
     this.durationMinutes = 60,
     this.maxParticipants = 4,
     this.status = 'created',
+    this.creatorId,
     this.creatorFirstName,
     this.creatorLastName,
     this.participantCount,
@@ -15,6 +18,7 @@ class StudySession {
     this.distanceKm,
     this.latitude,
     this.longitude,
+    this.memberRole = SessionMemberRole.none,
   });
 
   final String id;
@@ -25,6 +29,7 @@ class StudySession {
   final int durationMinutes;
   final int maxParticipants;
   final String status;
+  final String? creatorId;
   final String? creatorFirstName;
   final String? creatorLastName;
   final int? participantCount;
@@ -32,6 +37,50 @@ class StudySession {
   final double? distanceKm;
   final double? latitude;
   final double? longitude;
+  final SessionMemberRole memberRole;
+
+  bool get isParticipant => memberRole.isParticipant;
+  bool get isCreator => memberRole == SessionMemberRole.creator;
+
+  StudySession copyWith({
+    String? id,
+    String? subject,
+    String? topic,
+    String? locationName,
+    DateTime? startTime,
+    int? durationMinutes,
+    int? maxParticipants,
+    String? status,
+    String? creatorId,
+    String? creatorFirstName,
+    String? creatorLastName,
+    int? participantCount,
+    double? matchScore,
+    double? distanceKm,
+    double? latitude,
+    double? longitude,
+    SessionMemberRole? memberRole,
+  }) {
+    return StudySession(
+      id: id ?? this.id,
+      subject: subject ?? this.subject,
+      topic: topic ?? this.topic,
+      locationName: locationName ?? this.locationName,
+      startTime: startTime ?? this.startTime,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
+      maxParticipants: maxParticipants ?? this.maxParticipants,
+      status: status ?? this.status,
+      creatorId: creatorId ?? this.creatorId,
+      creatorFirstName: creatorFirstName ?? this.creatorFirstName,
+      creatorLastName: creatorLastName ?? this.creatorLastName,
+      participantCount: participantCount ?? this.participantCount,
+      matchScore: matchScore ?? this.matchScore,
+      distanceKm: distanceKm ?? this.distanceKm,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      memberRole: memberRole ?? this.memberRole,
+    );
+  }
 
   String get creatorName {
     if (creatorFirstName != null && creatorLastName != null) {
@@ -51,6 +100,13 @@ class StudySession {
     final now = DateTime.now();
     final end = startTime!.add(Duration(minutes: durationMinutes));
     return now.isAfter(startTime!) && now.isBefore(end);
+  }
+
+  bool get isEnded {
+    if (status == 'completed') return true;
+    if (startTime == null) return false;
+    final end = startTime!.add(Duration(minutes: durationMinutes));
+    return DateTime.now().isAfter(end);
   }
 
   bool get hasLocation => latitude != null && longitude != null;

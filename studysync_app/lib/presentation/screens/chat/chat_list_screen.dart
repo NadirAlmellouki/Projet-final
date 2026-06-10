@@ -5,7 +5,10 @@ import 'package:intl/intl.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../domain/entities/study_session.dart';
 import '../../providers/home_provider.dart';
+import '../../widgets/report_sheet.dart';
+import '../../widgets/studysync_widgets.dart';
 
 class ChatListScreen extends ConsumerStatefulWidget {
   const ChatListScreen({super.key});
@@ -29,58 +32,91 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: AppBar(title: const Text('Chat')),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : state.sessions.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      state.errorMessage ??
-                          'Créez une session ou rejoignez-en une pour discuter avec les participants.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.text2),
-                    ),
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: () => ref.read(chatListProvider.notifier).load(),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: state.sessions.length,
-                    itemBuilder: (context, index) {
-                      final s = state.sessions[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: AppColors.primaryTint,
-                            child: Text(
-                              s.creatorInitials,
-                              style: const TextStyle(color: AppColors.primary),
-                            ),
-                          ),
-                          title: Text(s.subject),
-                          subtitle: Text(
-                            [
-                              if (s.locationName != null && s.locationName!.isNotEmpty)
-                                s.locationName,
-                              if (s.startTime != null)
-                                DateFormat('dd/MM HH:mm').format(s.startTime!),
-                              '${s.participantCount ?? 1} participant(s)',
-                            ].whereType<String>().join(' · '),
-                          ),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () => context.push(
-                            '${AppRoutes.chatRoom}/${s.id}',
-                            extra: s.subject,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ScreenHeroHeader(
+              eyebrow: 'Messagerie',
+              title: 'Vos conversations',
+              subtitle: state.sessions.isEmpty
+                  ? 'Rejoignez une session pour discuter'
+                  : '${state.sessions.length} session(s) active(s)',
+              icon: Icons.chat_bubble_rounded,
+            ),
+            Expanded(
+              child: state.isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: AppColors.primary),
+                    )
+                  : state.sessions.isEmpty
+                      ? EmptyStateView(
+                          icon: Icons.forum_outlined,
+                          title: 'Aucune conversation',
+                          message: state.errorMessage ??
+                              'Créez une session ou rejoignez-en une pour discuter avec les participants.',
+                        )
+                      : RefreshIndicator(
+                          color: AppColors.primary,
+                          onRefresh: () =>
+                              ref.read(chatListProvider.notifier).load(),
+                          child: ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            itemCount: state.sessions.length,
+                            itemBuilder: (context, index) {
+                              final s = state.sessions[index];
+                              final subtitle = [
+                                if (s.locationName != null &&
+                                    s.locationName!.isNotEmpty)
+                                  s.locationName,
+                                if (s.startTime != null)
+                                  DateFormat('dd/MM HH:mm').format(s.startTime!),
+                                '${s.participantCount ?? 1} participant(s)',
+                              ].whereType<String>().join(' · ');
+
+                              return ChatSessionTile(
+                                initials: s.creatorInitials,
+                                title: s.subject,
+                                subtitle: _sessionSubtitle(s, subtitle),
+                                onTap: () => context.push(
+                                  '${AppRoutes.chatRoom}/${s.id}',
+                                  extra: s.subject,
+                                ),
+                                onRate: s.isEnded
+                                    ? () => context.push(
+                                          '${AppRoutes.rating}/${s.id}',
+                                          extra: s.subject,
+                                        )
+                                    : null,
+                                onReport: () async {
+                                  final sent = await ReportSheet.show(
+                                    context,
+                                    targetType: ReportTargetType.session,
+                                    targetLabel: s.subject,
+                                    reportedSessionId: s.id,
+                                    reportedUserId: s.creatorId,
+                                  );
+                                  if (sent == true && context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Signalement envoyé. Merci.'),
+                                      ),
+                                    );
+                                  }
+                                },
+                              );
+                            },
                           ),
                         ),
-                      );
-                    },
-                  ),
-                ),
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  String _sessionSubtitle(StudySession session, String base) {
+    if (session.isEnded) return '$base · À évaluer';
+    return base;
   }
 }

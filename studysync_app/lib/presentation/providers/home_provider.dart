@@ -5,9 +5,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/location_helper.dart';
 import 'auth_provider.dart';
 import '../../domain/entities/chat_message.dart';
+import '../../domain/entities/session_member_role.dart';
 import '../../domain/entities/study_session.dart';
 import '../../domain/entities/user_stats.dart';
 import 'app_providers.dart';
+
+List<StudySession> enrichSessionsMembership({
+  required List<StudySession> sessions,
+  required String? userId,
+  required Set<String> mySessionIds,
+}) {
+  return sessions.map((session) {
+    if (userId != null &&
+        session.creatorId != null &&
+        session.creatorId == userId) {
+      return session.copyWith(memberRole: SessionMemberRole.creator);
+    }
+    if (mySessionIds.contains(session.id)) {
+      return session.copyWith(memberRole: SessionMemberRole.member);
+    }
+    return session.copyWith(memberRole: SessionMemberRole.none);
+  }).toList();
+}
 
 class HomeFeedState {
   const HomeFeedState({
@@ -78,6 +97,16 @@ class HomeFeedNotifier extends StateNotifier<HomeFeedState> {
             .toList();
       }
 
+      final mySessions =
+          await _ref.read(sessionRepositoryProvider).getMySessions();
+      final myIds = mySessions.map((s) => s.id).toSet();
+      final userId = _ref.read(authProvider).user?.id;
+      sessions = enrichSessionsMembership(
+        sessions: sessions,
+        userId: userId,
+        mySessionIds: myIds,
+      );
+
       state = state.copyWith(sessions: sessions, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
@@ -87,11 +116,18 @@ class HomeFeedNotifier extends StateNotifier<HomeFeedState> {
   Future<bool> joinSession(String sessionId) async {
     try {
       await _ref.read(sessionRepositoryProvider).joinSession(sessionId);
+      final updated = state.sessions.map((s) {
+        if (s.id != sessionId) return s;
+        return s.copyWith(memberRole: SessionMemberRole.member);
+      }).toList();
+      state = state.copyWith(sessions: updated, clearError: true);
       await loadSessions(subject: state.searchQuery.isEmpty ? null : state.searchQuery);
       await _ref.read(chatListProvider.notifier).load();
       return true;
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      state = state.copyWith(
+        errorMessage: e.toString().replaceFirst('ApiException: ', ''),
+      );
       return false;
     }
   }
@@ -132,12 +168,21 @@ class MapSessionsNotifier extends StateNotifier<MapSessionsState> {
     state = const MapSessionsState(isLoading: true);
     try {
       final pos = await LocationHelper.getCurrentOrDefault();
-      final sessions = await _ref.read(sessionRepositoryProvider).listSessions(
-            latitude: pos.lat,
-            longitude: pos.lng,
-          );
+      final sessionRepo = _ref.read(sessionRepositoryProvider);
+      final sessions = await sessionRepo.listSessions(
+        latitude: pos.lat,
+        longitude: pos.lng,
+      );
+      final mySessions = await sessionRepo.getMySessions();
+      final myIds = mySessions.map((s) => s.id).toSet();
+      final userId = _ref.read(authProvider).user?.id;
+      final enriched = enrichSessionsMembership(
+        sessions: sessions,
+        userId: userId,
+        mySessionIds: myIds,
+      );
       state = MapSessionsState(
-        sessions: sessions.where((s) => s.hasLocation).toList(),
+        sessions: enriched.where((s) => s.hasLocation).toList(),
         userLat: pos.lat,
         userLng: pos.lng,
       );

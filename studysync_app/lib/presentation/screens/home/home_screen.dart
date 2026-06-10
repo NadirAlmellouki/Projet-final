@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../domain/entities/study_session.dart';
 import '../../providers/home_provider.dart';
+import '../../widgets/report_sheet.dart';
 import '../../widgets/studysync_widgets.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -38,6 +40,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
+  Future<void> _reportSession(StudySession session) async {
+    final sent = await ReportSheet.show(
+      context,
+      targetType: ReportTargetType.session,
+      targetLabel: session.subject,
+      reportedSessionId: session.id,
+      reportedUserId: session.creatorId,
+    );
+    if (sent == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Signalement envoyé. Merci.')),
+      );
+    }
+  }
+
   Future<void> _join(String sessionId, String subject) async {
     final ok = await ref.read(homeFeedProvider.notifier).joinSession(sessionId);
     if (!mounted) return;
@@ -61,33 +78,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreate,
         backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add),
+        elevation: 4,
+        icon: const Icon(Icons.add_rounded),
         label: const Text('Créer'),
       ),
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Bonjour 👋',
-                          style: TextStyle(fontSize: 12, color: AppColors.text3),
-                        ),
-                        Text(
-                          'Découvrir',
-                          style: Theme.of(context).appBarTheme.titleTextStyle,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+            const ScreenHeroHeader(
+              eyebrow: 'Bonjour 👋',
+              title: 'Sessions près de vous',
+              icon: Icons.explore_rounded,
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -187,7 +188,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             matchScore: session.matchScore,
             distanceKm: session.distanceKm,
             isActiveNow: session.isActiveNow,
-            onJoin: () => _join(session.id, session.subject),
+            memberRole: session.memberRole,
+            onJoin: session.isParticipant
+                ? null
+                : () => _join(session.id, session.subject),
+            onOpenChat: session.isParticipant
+                ? () => context.push(
+                      '${AppRoutes.chatRoom}/${session.id}',
+                      extra: session.subject,
+                    )
+                : null,
+            onReport: session.isParticipant
+                ? () => _reportSession(session)
+                : null,
           );
         },
       ),

@@ -10,6 +10,7 @@ class StudySessionModel extends StudySession {
     super.durationMinutes,
     super.maxParticipants,
     super.status,
+    super.creatorId,
     super.creatorFirstName,
     super.creatorLastName,
     super.participantCount,
@@ -17,6 +18,7 @@ class StudySessionModel extends StudySession {
     super.distanceKm,
     super.latitude,
     super.longitude,
+    super.memberRole,
   });
 
   factory StudySessionModel.fromJson(Map<String, dynamic> json) {
@@ -54,6 +56,7 @@ class StudySessionModel extends StudySession {
       durationMinutes: parseInt(json['duration_minutes']) ?? 60,
       maxParticipants: parseInt(json['max_participants']) ?? 4,
       status: json['status']?.toString() ?? 'created',
+      creatorId: json['creator_id']?.toString(),
       creatorFirstName: json['creator_first_name']?.toString(),
       creatorLastName: json['creator_last_name']?.toString(),
       participantCount: parseInt(json['participant_count']),

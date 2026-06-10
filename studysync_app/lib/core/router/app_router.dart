@@ -12,6 +12,7 @@ import '../../presentation/screens/onboarding/intro_walkthrough_screen.dart';
 import '../../presentation/screens/chat/chat_room_screen.dart';
 import '../../presentation/screens/onboarding/onboarding_screen.dart';
 import '../../presentation/screens/profile/profile_edit_screen.dart';
+import '../../presentation/screens/rating/rating_screen.dart';
 import '../../presentation/screens/sessions/create_session_screen.dart';
 import '../../presentation/screens/shell/main_shell_screen.dart';
 import '../../presentation/screens/splash/splash_screen.dart';
@@ -30,6 +31,7 @@ class AppRoutes {
   static const home = '/home';
   static const createSession = '/create-session';
   static const chatRoom = '/chat';
+  static const rating = '/rating';
   static const profile = '/profile';
   static const profileEdit = '/profile-edit';
 }
@@ -141,6 +143,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['sessionId']!;
           final title = state.extra as String? ?? 'Session';
           return ChatRoomScreen(sessionId: id, sessionTitle: title);
+        },
+      ),
+      GoRoute(
+        path: '${AppRoutes.rating}/:sessionId',
+        builder: (context, state) {
+          final id = state.pathParameters['sessionId']!;
+          final title = state.extra as String? ?? 'Session';
+          return RatingScreen(sessionId: id, sessionTitle: title);
         },
       ),
       GoRoute(

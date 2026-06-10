@@ -36,7 +36,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Se déconnecter ?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Se déconnecter ?',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -62,7 +66,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     if (user == null) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       );
     }
 
@@ -76,84 +82,96 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 48, 16, 20),
+            padding: const EdgeInsets.fromLTRB(16, 48, 16, 24),
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primaryLight],
-              ),
+              gradient: AppColors.heroGradient,
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
             ),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    OutlinedButton(
+                    TextButton.icon(
                       onPressed: _logout,
-                      style: OutlinedButton.styleFrom(
+                      icon: const Icon(Icons.logout_rounded, size: 18),
+                      label: const Text('Déconnexion'),
+                      style: TextButton.styleFrom(
                         foregroundColor: Colors.white,
-                        side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                        backgroundColor: Colors.white.withValues(alpha: 0.15),
                       ),
-                      child: const Text('⚙️ Paramètres'),
                     ),
                   ],
                 ),
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    UserAvatar(
-                      initials: user.initials,
-                      size: 72,
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      foregroundColor: Colors.white,
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          width: 3,
+                        ),
+                      ),
+                      child: UserAvatar(
+                        initials: user.initials,
+                        size: 76,
+                        backgroundColor: Colors.white.withValues(alpha: 0.25),
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                     Positioned(
                       bottom: 4,
                       right: 4,
                       child: Container(
-                        width: 12,
-                        height: 12,
+                        width: 14,
+                        height: 14,
                         decoration: BoxDecoration(
-                          color: AppColors.success,
+                          color: AppColors.accent,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.primary, width: 2),
+                          border: Border.all(color: Colors.white, width: 2),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Text(
                   user.fullName,
-                  style: GoogleFonts.nunitoSans(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
                 ),
+                const SizedBox(height: 4),
                 Text(
                   [
                     if (user.university != null) user.university,
                     if (user.major != null) user.major,
                     if (user.yearLabel.isNotEmpty) user.yearLabel,
                   ].join(' · '),
-                  style: TextStyle(
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
                     fontSize: 13,
-                    color: Colors.white.withValues(alpha: 0.75),
+                    color: Colors.white.withValues(alpha: 0.8),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryTint,
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(100),
                   ),
                   child: Text(
-                    user.role == 'student' ? 'Student' : user.role,
-                    style: const TextStyle(
+                    user.role == 'student' ? 'Étudiant' : user.role,
+                    style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF3730A3),
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -168,16 +186,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(
+                        child: OutlinedButton.icon(
                           onPressed: () => context.push(AppRoutes.profileEdit),
-                          child: const Text('✏️ Modifier'),
+                          icon: const Icon(Icons.edit_rounded, size: 18),
+                          label: const Text('Modifier'),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 10),
                       Expanded(
-                        child: OutlinedButton(
+                        child: OutlinedButton.icon(
                           onPressed: () {},
-                          child: const Text('Mes sessions'),
+                          icon: const Icon(Icons.event_note_rounded, size: 18),
+                          label: const Text('Sessions'),
                         ),
                       ),
                     ],
@@ -187,42 +207,51 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     crossAxisCount: 2,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 1.6,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 1.5,
                     children: [
                       StatCard(
                         value: stats.isLoading ? '…' : '${stats.sessionCount}',
                         label: 'Sessions',
+                        icon: Icons.event_rounded,
+                        accentIndex: 0,
                       ),
                       StatCard(
                         value: user.trustScore != null && user.trustScore! > 0
                             ? '${user.trustScore!.toStringAsFixed(1)}★'
                             : '—',
                         label: 'Note',
+                        icon: Icons.star_rounded,
+                        accentIndex: 1,
                       ),
-                      StatCard(value: trustDisplay, label: 'Trust'),
-                      const StatCard(value: '—', label: 'Partenaires'),
+                      StatCard(
+                        value: trustDisplay,
+                        label: 'Trust',
+                        icon: Icons.verified_rounded,
+                        accentIndex: 2,
+                      ),
+                      const StatCard(
+                        value: '—',
+                        label: 'Partenaires',
+                        icon: Icons.people_rounded,
+                        accentIndex: 3,
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border, width: 0.5),
-                    ),
+                  const SizedBox(height: 14),
+                  AppSurfaceCard(
+                    margin: EdgeInsets.zero,
+                    accentColor: AppColors.primary,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'BIO',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            letterSpacing: 0.7,
+                            letterSpacing: 0.8,
                             color: AppColors.text3,
                           ),
                         ),
@@ -231,8 +260,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           user.bio?.isNotEmpty == true
                               ? user.bio!
                               : 'Aucune bio pour le moment.',
-                          style: const TextStyle(
-                            fontSize: 13,
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
                             color: AppColors.text2,
                             height: 1.6,
                           ),

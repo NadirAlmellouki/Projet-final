@@ -66,9 +66,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     if (user == null) {
       return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
+        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
 
@@ -78,111 +76,121 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 48, 16, 24),
-            decoration: const BoxDecoration(
-              gradient: AppColors.heroGradient,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton.icon(
-                      onPressed: _logout,
-                      icon: const Icon(Icons.logout_rounded, size: 18),
-                      label: const Text('Déconnexion'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: Colors.white.withValues(alpha: 0.15),
-                      ),
-                    ),
-                  ],
-                ),
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          width: 3,
+      body: RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: _loadProfile,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Container(
+                decoration: const BoxDecoration(gradient: AppColors.heroGradient),
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton.icon(
+                              onPressed: _logout,
+                              icon: const Icon(Icons.logout_rounded, size: 18),
+                              label: const Text('Déconnexion'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                backgroundColor: Colors.white.withValues(alpha: 0.15),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      child: UserAvatar(
-                        initials: user.initials,
-                        size: 76,
-                        backgroundColor: Colors.white.withValues(alpha: 0.25),
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 4,
-                      right: 4,
-                      child: Container(
-                        width: 14,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: AppColors.accent,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  width: 3,
+                                ),
+                              ),
+                              child: GestureDetector(
+                                onTap: () => context.push(AppRoutes.profileEdit),
+                                child: UserAvatar(
+                                  initials: user.initials,
+                                  size: 76,
+                                  photoUrl: user.profilePhoto,
+                                  backgroundColor: Colors.white.withValues(alpha: 0.2),
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 4,
+                              right: 4,
+                              child: Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: AppColors.success,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        Text(
+                          user.fullName,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          [
+                            if (user.university != null) user.university,
+                            if (user.major != null) user.major,
+                            if (user.yearLabel.isNotEmpty) user.yearLabel,
+                          ].join(' · '),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: Text(
+                            user.role == 'student' ? 'Étudiant' : user.role,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  user.fullName,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  [
-                    if (user.university != null) user.university,
-                    if (user.major != null) user.major,
-                    if (user.yearLabel.isNotEmpty) user.yearLabel,
-                  ].join(' · '),
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text(
-                    user.role == 'student' ? 'Étudiant' : user.role,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
                   Row(
                     children: [
                       Expanded(
@@ -194,7 +202,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: OutlinedButton.icon(
+                        child: ElevatedButton.icon(
                           onPressed: () {},
                           icon: const Icon(Icons.event_note_rounded, size: 18),
                           label: const Text('Sessions'),
@@ -202,19 +210,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                   GridView.count(
                     crossAxisCount: 2,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     mainAxisSpacing: 10,
                     crossAxisSpacing: 10,
-                    childAspectRatio: 1.5,
+                    childAspectRatio: 1.45,
                     children: [
                       StatCard(
                         value: stats.isLoading ? '…' : '${stats.sessionCount}',
                         label: 'Sessions',
-                        icon: Icons.event_rounded,
+                        icon: Icons.event_note_rounded,
                         accentIndex: 0,
                       ),
                       StatCard(
@@ -227,7 +235,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                       StatCard(
                         value: trustDisplay,
-                        label: 'Trust',
+                        label: 'Trust score',
                         icon: Icons.verified_rounded,
                         accentIndex: 2,
                       ),
@@ -241,27 +249,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   const SizedBox(height: 14),
                   AppSurfaceCard(
-                    margin: EdgeInsets.zero,
-                    accentColor: AppColors.primary,
+                    accentColor: AppColors.accent,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'BIO',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
+                          'À propos',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: AppColors.text3,
+                            color: AppColors.text1,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           user.bio?.isNotEmpty == true
                               ? user.bio!
-                              : 'Aucune bio pour le moment.',
+                              : 'Aucune bio pour le moment. Ajoute une description pour te présenter aux autres étudiants.',
                           style: GoogleFonts.inter(
-                            fontSize: 14,
+                            fontSize: 13,
                             color: AppColors.text2,
                             height: 1.6,
                           ),
@@ -269,11 +275,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ],
                     ),
                   ),
-                ],
+                ]),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -81,15 +81,36 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final btn = ElevatedButton(
-      onPressed: isLoading ? null : onPressed,
-      child: isLoading
-          ? const SizedBox(
-              height: 22,
-              width: 22,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-            )
-          : Text(label),
+    final btn = DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: onPressed != null && !isLoading ? AppColors.buttonGradient : null,
+        color: onPressed == null || isLoading ? AppColors.border : null,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: onPressed != null && !isLoading
+            ? [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.28),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: ElevatedButton(
+        onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          minimumSize: const Size.fromHeight(48),
+        ),
+        child: isLoading
+            ? const SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              )
+            : Text(label),
+      ),
     );
     return fullWidth ? SizedBox(width: double.infinity, child: btn) : btn;
   }
@@ -187,13 +208,13 @@ class ErrorBanner extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEE2E2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFFECACA)),
+        color: AppColors.errorTint,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
       ),
       child: Text(
         message,
-        style: const TextStyle(color: Color(0xFF991B1B), fontSize: 13),
+        style: const TextStyle(color: AppColors.error, fontSize: 13),
       ),
     );
   }

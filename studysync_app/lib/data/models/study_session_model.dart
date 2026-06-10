@@ -5,6 +5,7 @@ class StudySessionModel extends StudySession {
     required super.id,
     required super.subject,
     super.topic,
+    super.description,
     super.locationName,
     super.startTime,
     super.durationMinutes,
@@ -47,18 +48,24 @@ class StudySessionModel extends StudySession {
       }
     }
 
+    final creator = json['creator'];
+    final creatorMap = creator is Map ? Map<String, dynamic>.from(creator) : null;
+
     return StudySessionModel(
       id: json['id']?.toString() ?? '',
       subject: json['subject']?.toString() ?? 'Session',
       topic: json['topic']?.toString(),
+      description: json['description']?.toString(),
       locationName: json['location_name']?.toString(),
       startTime: parsedStart,
       durationMinutes: parseInt(json['duration_minutes']) ?? 60,
       maxParticipants: parseInt(json['max_participants']) ?? 4,
       status: json['status']?.toString() ?? 'created',
-      creatorId: json['creator_id']?.toString(),
-      creatorFirstName: json['creator_first_name']?.toString(),
-      creatorLastName: json['creator_last_name']?.toString(),
+      creatorId: json['creator_id']?.toString() ?? creatorMap?['id']?.toString(),
+      creatorFirstName: json['creator_first_name']?.toString() ??
+          creatorMap?['first_name']?.toString(),
+      creatorLastName: json['creator_last_name']?.toString() ??
+          creatorMap?['last_name']?.toString(),
       participantCount: parseInt(json['participant_count']),
       matchScore: parseDouble(json['match_score']),
       distanceKm: parseDouble(json['distance_km']),

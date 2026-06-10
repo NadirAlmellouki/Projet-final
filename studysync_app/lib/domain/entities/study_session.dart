@@ -5,6 +5,7 @@ class StudySession {
     required this.id,
     required this.subject,
     this.topic,
+    this.description,
     this.locationName,
     this.startTime,
     this.durationMinutes = 60,
@@ -24,6 +25,7 @@ class StudySession {
   final String id;
   final String subject;
   final String? topic;
+  final String? description;
   final String? locationName;
   final DateTime? startTime;
   final int durationMinutes;
@@ -46,6 +48,7 @@ class StudySession {
     String? id,
     String? subject,
     String? topic,
+    String? description,
     String? locationName,
     DateTime? startTime,
     int? durationMinutes,
@@ -65,6 +68,7 @@ class StudySession {
       id: id ?? this.id,
       subject: subject ?? this.subject,
       topic: topic ?? this.topic,
+      description: description ?? this.description,
       locationName: locationName ?? this.locationName,
       startTime: startTime ?? this.startTime,
       durationMinutes: durationMinutes ?? this.durationMinutes,
@@ -83,16 +87,25 @@ class StudySession {
   }
 
   String get creatorName {
-    if (creatorFirstName != null && creatorLastName != null) {
-      return '$creatorFirstName $creatorLastName';
-    }
-    return 'Étudiant';
+    final parts = [
+      if (creatorFirstName != null && creatorFirstName!.trim().isNotEmpty)
+        creatorFirstName!.trim(),
+      if (creatorLastName != null && creatorLastName!.trim().isNotEmpty)
+        creatorLastName!.trim(),
+    ];
+    if (parts.isNotEmpty) return parts.join(' ');
+    return 'Organisateur';
   }
 
   String get creatorInitials {
-    final f = creatorFirstName?.isNotEmpty == true ? creatorFirstName![0] : 'E';
-    final l = creatorLastName?.isNotEmpty == true ? creatorLastName![0] : 'T';
-    return '$f$l'.toUpperCase();
+    if (creatorFirstName?.isNotEmpty == true && creatorLastName?.isNotEmpty == true) {
+      return '${creatorFirstName![0]}${creatorLastName![0]}'.toUpperCase();
+    }
+    if (creatorFirstName?.isNotEmpty == true) {
+      return creatorFirstName!.substring(0, 1).toUpperCase();
+    }
+    if (subject.isNotEmpty) return subject.substring(0, 1).toUpperCase();
+    return 'S';
   }
 
   bool get isActiveNow {
@@ -102,12 +115,7 @@ class StudySession {
     return now.isAfter(startTime!) && now.isBefore(end);
   }
 
-  bool get isEnded {
-    if (status == 'completed') return true;
-    if (startTime == null) return false;
-    final end = startTime!.add(Duration(minutes: durationMinutes));
-    return DateTime.now().isAfter(end);
-  }
-
   bool get hasLocation => latitude != null && longitude != null;
+
+  DateTime? get endTime => startTime?.add(Duration(minutes: durationMinutes));
 }

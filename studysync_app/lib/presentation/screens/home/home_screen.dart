@@ -6,6 +6,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/study_session.dart';
 import '../../providers/home_provider.dart';
+import '../sessions/session_detail_screen.dart';
 import '../../widgets/report_sheet.dart';
 import '../../widgets/studysync_widgets.dart';
 
@@ -75,20 +76,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openCreate,
-        backgroundColor: AppColors.primary,
-        elevation: 4,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Créer'),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: FloatingActionButton.extended(
+          onPressed: _openCreate,
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 4,
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Créer'),
+        ),
       ),
       body: SafeArea(
         child: Column(
           children: [
-            const ScreenHeroHeader(
+            ScreenHeroHeader(
               eyebrow: 'Bonjour 👋',
               title: 'Sessions près de vous',
+              subtitle: 'Trouve ton prochain partenaire d\'étude',
               icon: Icons.explore_rounded,
+              trailing: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _openCreate,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add_rounded, color: Colors.white, size: 18),
+                        SizedBox(width: 4),
+                        Text(
+                          'Créer',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -147,23 +184,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     if (feed.sessions.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Aucune session disponible.',
-                style: TextStyle(color: AppColors.text2),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: _openCreate,
-                child: const Text('Créer la première session'),
-              ),
-            ],
-          ),
+      return EmptyState(
+        icon: Icons.event_busy_rounded,
+        title: 'Aucune session',
+        message: 'Soyez le premier à créer une session près de chez vous.',
+        action: ElevatedButton.icon(
+          onPressed: _openCreate,
+          icon: const Icon(Icons.add_rounded, size: 18),
+          label: const Text('Créer une session'),
         ),
       );
     }
@@ -173,18 +201,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             subject: feed.searchQuery.isEmpty ? null : feed.searchQuery,
           ),
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
         itemCount: feed.sessions.length,
         itemBuilder: (context, index) {
           final session = feed.sessions[index];
           return SessionCard(
+            onTap: () => openSessionDetail(context, session),
             creatorInitials: session.creatorInitials,
             creatorName: session.creatorName,
             subject: session.subject,
             subtitle: [
+              'Par ${session.creatorName}',
               if (session.topic != null) session.topic,
               if (session.locationName != null) session.locationName,
-            ].whereType<String>().join(' · '),
+            ].join(' · '),
             matchScore: session.matchScore,
             distanceKm: session.distanceKm,
             isActiveNow: session.isActiveNow,

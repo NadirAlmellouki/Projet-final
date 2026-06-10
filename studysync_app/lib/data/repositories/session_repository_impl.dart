@@ -76,6 +76,45 @@ class SessionRepositoryImpl implements SessionRepository {
   }
 
   @override
+  Future<StudySession> getSessionById(
+    String sessionId, {
+    double? latitude,
+    double? longitude,
+  }) async {
+    final response = await _api.get(
+      ApiEndpoints.sessionById(sessionId),
+      queryParameters: {
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
+      },
+    );
+    final data = response.data;
+    if (data is! Map) throw Exception('Session invalide');
+
+    final map = Map<String, dynamic>.from(data);
+    StudySession session;
+    if (map['session'] is Map) {
+      session = StudySessionModel.fromJson(
+        Map<String, dynamic>.from(map['session'] as Map),
+      );
+    } else {
+      session = StudySessionModel.fromJson(map);
+    }
+
+    final matchScore = double.tryParse('${map['match_score']}');
+    if (matchScore != null) {
+      session = session.copyWith(matchScore: matchScore);
+    }
+
+    final participants = map['participants'];
+    if (participants is List && participants.isNotEmpty) {
+      session = session.copyWith(participantCount: participants.length);
+    }
+
+    return session;
+  }
+
+  @override
   Future<StudySession> createSession(CreateSessionRequest request) async {
     final response = await _api.post(
       ApiEndpoints.sessions,

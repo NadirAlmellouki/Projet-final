@@ -28,6 +28,50 @@ List<StudySession> enrichSessionsMembership({
   }).toList();
 }
 
+StudySession _mergeSessionPair(StudySession a, StudySession b) {
+  return a.copyWith(
+    subject: a.subject != 'Session' ? a.subject : b.subject,
+    topic: a.topic ?? b.topic,
+    description: a.description ?? b.description,
+    locationName: a.locationName ?? b.locationName,
+    creatorId: a.creatorId ?? b.creatorId,
+    creatorFirstName: a.creatorFirstName ?? b.creatorFirstName,
+    creatorLastName: a.creatorLastName ?? b.creatorLastName,
+    participantCount: a.participantCount ?? b.participantCount,
+    matchScore: a.matchScore ?? b.matchScore,
+    distanceKm: a.distanceKm ?? b.distanceKm,
+    latitude: a.latitude ?? b.latitude,
+    longitude: a.longitude ?? b.longitude,
+    startTime: a.startTime ?? b.startTime,
+  );
+}
+
+List<StudySession> mergeSessionLists(List<List<StudySession>> sources) {
+  final byId = <String, StudySession>{};
+  for (final list in sources) {
+    for (final session in list) {
+      if (session.id.isEmpty) continue;
+      final existing = byId[session.id];
+      byId[session.id] =
+          existing == null ? session : _mergeSessionPair(existing, session);
+    }
+  }
+  return byId.values.toList();
+}
+
+void sortDiscoverSessions(List<StudySession> sessions) {
+  sessions.sort((a, b) {
+    final aMine = a.isParticipant ? 0 : 1;
+    final bMine = b.isParticipant ? 0 : 1;
+    if (aMine != bMine) return aMine.compareTo(bMine);
+
+    final matchCmp = (b.matchScore ?? -1).compareTo(a.matchScore ?? -1);
+    if (matchCmp != 0) return matchCmp;
+
+    return (a.distanceKm ?? 9999).compareTo(b.distanceKm ?? 9999);
+  });
+}
+
 class HomeFeedState {
   const HomeFeedState({
     this.sessions = const [],
@@ -68,44 +112,61 @@ class HomeFeedNotifier extends StateNotifier<HomeFeedState> {
       final sessionRepo = _ref.read(sessionRepositoryProvider);
       final pos = await LocationHelper.getCurrentOrDefault();
 
-      List<StudySession> sessions;
+      final mySessions = await sessionRepo.getMySessions();
+      final myIds = mySessions.map((s) => s.id).toSet();
+      final userId = _ref.read(authProvider).user?.id;
+
+      List<StudySession> recommended = [];
+      List<StudySession> nearby = [];
+      List<StudySession> all = [];
+
       try {
-        sessions = await sessionRepo.getRecommendedSessions(
+        recommended = await sessionRepo.getRecommendedSessions(
           latitude: pos.lat,
           longitude: pos.lng,
+          radiusKm: 20,
         );
-      } catch (_) {
-        sessions = await sessionRepo.listSessions(
+      } catch (_) {}
+
+      try {
+        nearby = await sessionRepo.listSessions(
           latitude: pos.lat,
           longitude: pos.lng,
           subject: subject,
         );
+      } catch (_) {}
+
+      if (nearby.isEmpty) {
+        try {
+          all = await sessionRepo.listSessions(subject: subject);
+        } catch (_) {}
       }
 
-      if (sessions.isEmpty) {
-        sessions = await sessionRepo.listSessions(subject: subject);
-      }
+      var sessions = mergeSessionLists([
+        mySessions,
+        recommended,
+        nearby,
+        all,
+      ]);
 
       if (subject != null && subject.isNotEmpty) {
         final q = subject.toLowerCase();
         sessions = sessions
             .where(
               (s) =>
+                  s.isParticipant ||
                   s.subject.toLowerCase().contains(q) ||
                   (s.topic?.toLowerCase().contains(q) ?? false),
             )
             .toList();
       }
 
-      final mySessions =
-          await _ref.read(sessionRepositoryProvider).getMySessions();
-      final myIds = mySessions.map((s) => s.id).toSet();
-      final userId = _ref.read(authProvider).user?.id;
       sessions = enrichSessionsMembership(
         sessions: sessions,
         userId: userId,
         mySessionIds: myIds,
       );
+      sortDiscoverSessions(sessions);
 
       state = state.copyWith(sessions: sessions, isLoading: false);
     } catch (e) {

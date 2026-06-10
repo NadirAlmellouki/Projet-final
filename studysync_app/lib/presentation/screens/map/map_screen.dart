@@ -12,6 +12,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../domain/entities/session_member_role.dart';
 import '../../../domain/entities/study_session.dart';
 import '../../providers/home_provider.dart';
+import '../sessions/session_detail_screen.dart';
 import '../../widgets/report_sheet.dart';
 import '../../widgets/studysync_widgets.dart';
 
@@ -52,7 +53,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   void _centerOnUser(LatLng center) {
-    _mapController.move(center, 14.5);
+    _mapController.move(center, 14);
+    ref.read(mapSessionsProvider.notifier).load();
   }
 
   void _showSessionSheet(StudySession session) {
@@ -81,30 +83,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             const SizedBox(height: 18),
             Row(
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: session.isParticipant
-                        ? const LinearGradient(
-                            colors: [AppColors.accent, AppColors.primary],
-                          )
-                        : AppColors.buttonGradient,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    session.subject.isNotEmpty
-                        ? session.subject[0].toUpperCase()
-                        : 'S',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
+                UserAvatar(initials: session.creatorInitials, size: 48),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,10 +100,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       if (session.locationName != null)
                         Text(
                           session.locationName!,
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: AppColors.text3,
-                          ),
+                          style: GoogleFonts.inter(fontSize: 13, color: AppColors.text3),
                         ),
                     ],
                   ),
@@ -142,15 +119,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ),
                 if (session.isActiveNow)
                   const SessionChip(label: 'En cours', variant: ChipVariant.green),
-                SessionChip(
-                  label: '${session.participantCount ?? 1} participant(s)',
-                  variant: ChipVariant.primary,
-                ),
+                if (session.isParticipant)
+                  const SessionChip(label: 'Ma session', variant: ChipVariant.primary),
               ],
             ),
             const SizedBox(height: 20),
             _MapSessionActions(
               session: session,
+              onViewDetails: () {
+                Navigator.pop(ctx);
+                openSessionDetail(context, session);
+              },
               onJoin: () => _joinSession(session),
               onOpenChat: () {
                 Navigator.pop(ctx);
@@ -181,6 +160,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  Color _pinColor(StudySession session) {
+    if (session.isCreator) return AppColors.mapPinJoined;
+    if (session.memberRole == SessionMemberRole.member) return AppColors.mapPinMine;
+    return AppColors.mapPinOther;
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(mapSessionsProvider);
@@ -193,7 +178,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const CircularProgressIndicator(color: AppColors.primary),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               Text(
                 'Chargement de la carte…',
                 style: GoogleFonts.inter(color: AppColors.text2),
@@ -204,11 +189,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       );
     }
 
-    final sessionsWithLoc =
-        state.sessions.where((s) => s.hasLocation).toList();
-    final joinedCount =
-        sessionsWithLoc.where((s) => s.isParticipant).length;
-
+    final sessionsWithLoc = state.sessions.where((s) => s.hasLocation).toList();
     final userPoint = LatLng(
       state.userLat ?? 33.9716,
       state.userLng ?? -6.8498,
@@ -229,8 +210,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             options: MapOptions(
               initialCenter: center,
               initialZoom: 13.5,
-              minZoom: 10,
-              maxZoom: 18,
             ),
             children: [
               TileLayer(
@@ -243,10 +222,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 circles: [
                   CircleMarker(
                     point: userPoint,
-                    radius: 800,
+                    radius: 120,
                     useRadiusInMeter: true,
-                    color: AppColors.mapUserDot.withValues(alpha: 0.08),
-                    borderColor: AppColors.mapUserDot.withValues(alpha: 0.2),
+                    color: AppColors.accent.withValues(alpha: 0.12),
+                    borderColor: AppColors.accent.withValues(alpha: 0.35),
                     borderStrokeWidth: 1.5,
                   ),
                 ],
@@ -255,19 +234,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 markers: [
                   Marker(
                     point: userPoint,
-                    width: 56,
-                    height: 56,
-                    child: const _UserLocationMarker(),
+                    width: 52,
+                    height: 52,
+                    child: _UserLocationMarker(),
                   ),
                   ...sessionsWithLoc.map(
                     (s) => Marker(
                       point: LatLng(s.latitude!, s.longitude!),
-                      width: 52,
-                      height: 62,
+                      width: 48,
+                      height: 56,
                       alignment: Alignment.topCenter,
                       child: GestureDetector(
                         onTap: () => _showSessionSheet(s),
-                        child: _SessionMapPin(session: s),
+                        child: _SessionMapPin(
+                          label: s.subject,
+                          color: _pinColor(s),
+                          isActive: s.isActiveNow,
+                        ),
                       ),
                     ),
                   ),
@@ -281,183 +264,57 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             right: 0,
             child: SafeArea(
               bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.mapOverlay,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.8),
+              child: Column(
+                children: [
+                  ScreenHeroHeader(
+                    compact: true,
+                    eyebrow: 'Géolocalisation',
+                    title: 'Sessions autour de vous',
+                    subtitle: '${sessionsWithLoc.length} lieu(x) sur la carte',
+                    icon: Icons.map_rounded,
+                    trailing: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => _centerOnUser(userPoint),
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.my_location_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
                         ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: AppColors.cardShadow,
-                            blurRadius: 16,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              gradient: AppColors.heroGradient,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.map_rounded,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Carte des sessions',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.text1,
-                                  ),
-                                ),
-                                Text(
-                                  '${sessionsWithLoc.length} session(s) à proximité',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    color: AppColors.text3,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          _MapLegendDot(
-                            color: AppColors.mapMarkerOpen,
-                            label: 'Ouverte',
-                          ),
-                          const SizedBox(width: 8),
-                          _MapLegendDot(
-                            color: AppColors.mapMarkerJoined,
-                            label: 'Membre',
-                          ),
-                        ],
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    if (sessionsWithLoc.isNotEmpty)
-                      SizedBox(
-                        height: 44,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: sessionsWithLoc.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 8),
-                          itemBuilder: (context, i) {
-                            final s = sessionsWithLoc[i];
-                            return ActionChip(
-                              avatar: CircleAvatar(
-                                radius: 10,
-                                backgroundColor: s.isParticipant
-                                    ? AppColors.mapMarkerJoined
-                                    : AppColors.mapMarkerOpen,
-                                child: Text(
-                                  s.subject.isNotEmpty
-                                      ? s.subject[0].toUpperCase()
-                                      : 'S',
-                                  style: const TextStyle(
-                                    fontSize: 9,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                              label: Text(
-                                s.subject,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              backgroundColor: AppColors.mapOverlay,
-                              side: const BorderSide(color: AppColors.border),
-                              onPressed: () {
-                                _mapController.move(
-                                  LatLng(s.latitude!, s.longitude!),
-                                  15,
-                                );
-                                _showSessionSheet(s);
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                  ],
-                ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _MapLegendBar(sessionCount: sessionsWithLoc.length),
+                  ),
+                ],
               ),
             ),
           ),
-          Positioned(
-            right: 16,
-            bottom: 100,
-            child: Column(
-              children: [
-                _MapFab(
-                  icon: Icons.my_location_rounded,
-                  tooltip: 'Ma position',
-                  onPressed: () => _centerOnUser(userPoint),
-                ),
-                const SizedBox(height: 10),
-                _MapFab(
-                  icon: Icons.refresh_rounded,
-                  tooltip: 'Actualiser',
-                  onPressed: () =>
-                      ref.read(mapSessionsProvider.notifier).load(),
-                ),
-              ],
-            ),
-          ),
-          if (joinedCount > 0)
+          if (state.errorMessage != null)
             Positioned(
               left: 16,
-              bottom: 100,
+              right: 16,
+              bottom: 88,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.accent, AppColors.primary],
-                  ),
-                  borderRadius: BorderRadius.circular(100),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  color: AppColors.errorTint,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.check_circle, color: Colors.white, size: 16),
-                    const SizedBox(width: 6),
-                    Text(
-                      '$joinedCount rejointe(s)',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  state.errorMessage!,
+                  style: const TextStyle(color: AppColors.error, fontSize: 12),
                 ),
               ),
             ),
@@ -468,31 +325,29 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 }
 
 class _UserLocationMarker extends StatelessWidget {
-  const _UserLocationMarker();
-
   @override
   Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.center,
       children: [
         Container(
-          width: 48,
-          height: 48,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
+            color: AppColors.accent.withValues(alpha: 0.2),
             shape: BoxShape.circle,
-            color: AppColors.mapUserDot.withValues(alpha: 0.15),
           ),
         ),
         Container(
           width: 18,
           height: 18,
           decoration: BoxDecoration(
+            color: AppColors.accent,
             shape: BoxShape.circle,
-            color: AppColors.mapUserDot,
             border: Border.all(color: Colors.white, width: 3),
             boxShadow: [
               BoxShadow(
-                color: AppColors.mapUserDot.withValues(alpha: 0.4),
+                color: AppColors.accent.withValues(alpha: 0.45),
                 blurRadius: 8,
               ),
             ],
@@ -504,39 +359,41 @@ class _UserLocationMarker extends StatelessWidget {
 }
 
 class _SessionMapPin extends StatelessWidget {
-  const _SessionMapPin({required this.session});
+  const _SessionMapPin({
+    required this.label,
+    required this.color,
+    required this.isActive,
+  });
 
-  final StudySession session;
+  final String label;
+  final Color color;
+  final bool isActive;
+
+  String get _abbr {
+    final parts = label.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final joined = session.isParticipant;
-    final color =
-        joined ? AppColors.mapMarkerJoined : AppColors.mapMarkerOpen;
-    final letter = session.subject.isNotEmpty
-        ? session.subject[0].toUpperCase()
-        : 'S';
-
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            gradient: joined
-                ? const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.accent, AppColors.primary],
-                  )
-                : null,
-            color: joined ? null : color,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [color, Color.lerp(color, Colors.black, 0.15)!],
+            ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.white, width: 2.5),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: 0.45),
+                color: color.withValues(alpha: 0.4),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -544,18 +401,35 @@ class _SessionMapPin extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: Text(
-            letter,
+            _abbr,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
               color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
             ),
           ),
         ),
         CustomPaint(
           size: const Size(14, 8),
-          painter: _PinTailPainter(color: joined ? AppColors.primary : color),
+          painter: _PinTailPainter(color: color),
         ),
+        if (isActive)
+          Container(
+            margin: const EdgeInsets.only(top: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.success,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              'LIVE',
+              style: GoogleFonts.inter(
+                fontSize: 8,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -578,47 +452,61 @@ class _PinTailPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _PinTailPainter oldDelegate) =>
-      oldDelegate.color != color;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _MapFab extends StatelessWidget {
-  const _MapFab({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
+class _MapLegendBar extends StatelessWidget {
+  const _MapLegendBar({required this.sessionCount});
 
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
+  final int sessionCount;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.mapOverlay,
-      elevation: 4,
-      shadowColor: AppColors.cardShadow,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onPressed,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.cardShadow,
+            blurRadius: 12,
+            offset: Offset(0, 4),
           ),
-          child: Icon(icon, color: AppColors.primary, size: 22),
-        ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _LegendDot(color: AppColors.mapPinOther, label: 'Disponible'),
+          const SizedBox(width: 12),
+          _LegendDot(color: AppColors.mapPinMine, label: 'Membre'),
+          const SizedBox(width: 12),
+          _LegendDot(color: AppColors.mapPinJoined, label: 'Créateur'),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.primaryTint,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '$sessionCount',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _MapLegendDot extends StatelessWidget {
-  const _MapLegendDot({required this.color, required this.label});
+class _LegendDot extends StatelessWidget {
+  const _LegendDot({required this.color, required this.label});
 
   final Color color;
   final String label;
@@ -633,10 +521,10 @@ class _MapLegendDot extends StatelessWidget {
           height: 10,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 5),
         Text(
           label,
-          style: GoogleFonts.inter(fontSize: 10, color: AppColors.text3),
+          style: GoogleFonts.inter(fontSize: 10, color: AppColors.text2),
         ),
       ],
     );
@@ -646,26 +534,37 @@ class _MapLegendDot extends StatelessWidget {
 class _MapSessionActions extends StatelessWidget {
   const _MapSessionActions({
     required this.session,
+    required this.onViewDetails,
     required this.onJoin,
     required this.onOpenChat,
     required this.onReport,
   });
 
   final StudySession session;
+  final VoidCallback onViewDetails;
   final VoidCallback onJoin;
   final VoidCallback onOpenChat;
   final VoidCallback onReport;
 
   @override
   Widget build(BuildContext context) {
-    return switch (session.memberRole) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OutlinedButton.icon(
+          onPressed: onViewDetails,
+          icon: const Icon(Icons.info_outline_rounded, size: 18),
+          label: const Text('Voir les détails'),
+        ),
+        const SizedBox(height: 10),
+        switch (session.memberRole) {
       SessionMemberRole.creator => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _SheetStatusRow(
               icon: Icons.star_rounded,
               label: 'Vous êtes le créateur',
-              color: AppColors.primary,
+              color: AppColors.coral,
             ),
             const SizedBox(height: 12),
             ElevatedButton.icon(
@@ -706,25 +605,14 @@ class _MapSessionActions extends StatelessWidget {
             ),
           ],
         ),
-      SessionMemberRole.none => SizedBox(
-          width: double.infinity,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: AppColors.buttonGradient,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: ElevatedButton.icon(
-              onPressed: onJoin,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-              ),
-              icon: const Icon(Icons.group_add_rounded, size: 18),
-              label: const Text('Rejoindre la session'),
-            ),
-          ),
+      SessionMemberRole.none => ElevatedButton.icon(
+          onPressed: onJoin,
+          icon: const Icon(Icons.group_add_rounded, size: 18),
+          label: const Text('Rejoindre la session'),
         ),
-    };
+    },
+      ],
+    );
   }
 }
 
@@ -753,10 +641,7 @@ class _SheetStatusRow extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             label,
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
+            style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: color),
           ),
         ],
       ),

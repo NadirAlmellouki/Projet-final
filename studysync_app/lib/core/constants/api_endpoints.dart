@@ -20,7 +20,6 @@ class ApiEndpoints {
   static const matchesNearby = '/api/matches/nearby-sessions';
   static const matchesHeatmap = '/api/matches/heatmap';
 
-  static const ratings = '/api/ratings';
   static String userRatings(String userId) => '/api/ratings/user/$userId';
   static const reports = '/api/reports';
   static const health = '/api/health';

@@ -17,6 +17,11 @@ abstract class SessionRepository {
   });
 
   Future<List<StudySession>> getMySessions();
+  Future<StudySession> getSessionById(
+    String sessionId, {
+    double? latitude,
+    double? longitude,
+  });
   Future<StudySession> createSession(CreateSessionRequest request);
   Future<void> joinSession(String sessionId, {String? message});
   Future<List<StudySession>> getNearbySessions({

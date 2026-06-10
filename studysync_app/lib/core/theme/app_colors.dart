@@ -1,71 +1,77 @@
 import 'package:flutter/material.dart';
 
-/// Palette StudySync — indigo électrique + menthe, cohérente sur toute l'app.
+/// Palette StudySync — indigo profond, corail chaud, teal frais.
 class AppColors {
   AppColors._();
 
-  static const primary = Color(0xFF6C5CE7);
-  static const primaryLight = Color(0xFFA29BFE);
-  static const primaryDark = Color(0xFF4E44C9);
-  static const primaryTint = Color(0xFFF0EEFF);
-  static const primarySoft = Color(0xFFE4E0FF);
+  static const primary = Color(0xFF4F46E5);
+  static const primaryLight = Color(0xFF818CF8);
+  static const primaryDark = Color(0xFF3730A3);
+  static const primaryTint = Color(0xFFEEF2FF);
+  static const primarySoft = Color(0xFFE0E7FF);
 
-  static const accent = Color(0xFF00CEC9);
-  static const accentLight = Color(0xFF81ECEC);
-  static const accentTint = Color(0xFFE0FFFE);
-  static const accentDark = Color(0xFF00A8A3);
+  static const accent = Color(0xFF0D9488);
+  static const accentLight = Color(0xFF2DD4BF);
+  static const accentTint = Color(0xFFCCFBF1);
 
-  static const success = Color(0xFF00B894);
-  static const successTint = Color(0xFFE8FFF8);
+  static const coral = Color(0xFFF97316);
+  static const coralTint = Color(0xFFFFF7ED);
 
-  static const warning = Color(0xFFFDCB6E);
-  static const warningTint = Color(0xFFFFF8E8);
+  static const success = Color(0xFF059669);
+  static const successTint = Color(0xFFECFDF5);
 
-  static const error = Color(0xFFFF6B6B);
-  static const errorTint = Color(0xFFFFF0F0);
+  static const warning = Color(0xFFD97706);
+  static const warningTint = Color(0xFFFFFBEB);
 
-  static const text1 = Color(0xFF2D3436);
-  static const text2 = Color(0xFF636E72);
-  static const text3 = Color(0xFFB2BEC3);
+  static const error = Color(0xFFDC2626);
+  static const errorTint = Color(0xFFFEF2F2);
 
-  static const border = Color(0xFFDFE6E9);
-  static const surface = Color(0xFFF5F6FA);
+  static const text1 = Color(0xFF0F172A);
+  static const text2 = Color(0xFF475569);
+  static const text3 = Color(0xFF94A3B8);
+
+  static const border = Color(0xFFE2E8F0);
+  static const surface = Color(0xFFF1F5F9);
   static const surfaceElevated = Color(0xFFFFFFFF);
 
   static const white = Color(0xFFFFFFFF);
-  static const gradientStart = Color(0xFF6C5CE7);
-  static const gradientEnd = Color(0xFF2D1B69);
+  static const gradientStart = Color(0xFF4F46E5);
+  static const gradientEnd = Color(0xFF1E1B4B);
 
-  static const cardShadow = Color(0x142D3436);
+  static const cardShadow = Color(0x140F172A);
+  static const navShadow = Color(0x1F4F46E5);
 
-  // Carte
-  static const mapOverlay = Color(0xE6FFFFFF);
-  static const mapMarkerOpen = Color(0xFF6C5CE7);
-  static const mapMarkerJoined = Color(0xFF00CEC9);
-  static const mapUserDot = Color(0xFF0984E3);
+  static const mapOverlay = Color(0xCC0F172A);
+  static const mapPinMine = Color(0xFF0D9488);
+  static const mapPinOther = Color(0xFF4F46E5);
+  static const mapPinJoined = Color(0xFFF97316);
+
+  static const List<Color> statAccents = [
+    primary,
+    coral,
+    accent,
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
 
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF6C5CE7), Color(0xFF8B7CF6), Color(0xFF00CEC9)],
+    colors: [Color(0xFF4F46E5), Color(0xFF6366F1), Color(0xFF0D9488)],
     stops: [0.0, 0.5, 1.0],
+  );
+
+  static const LinearGradient mapHeaderGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF312E81), Color(0xFF4F46E5), Color(0xFF0D9488)],
   );
 
   static const LinearGradient buttonGradient = LinearGradient(
     colors: [primary, primaryLight],
   );
 
-  static const LinearGradient chatBubbleMine = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFF6C5CE7), Color(0xFF8B7CF6)],
+  static const LinearGradient chatMineGradient = LinearGradient(
+    colors: [primary, Color(0xFF6366F1)],
   );
-
-  static const List<Color> statAccents = [
-    primary,
-    accent,
-    success,
-    Color(0xFFFD79A8),
-    Color(0xFF0984E3),
-  ];
 }

@@ -14,6 +14,8 @@ import '../../presentation/screens/onboarding/onboarding_screen.dart';
 import '../../presentation/screens/profile/profile_edit_screen.dart';
 import '../../presentation/screens/rating/rating_screen.dart';
 import '../../presentation/screens/sessions/create_session_screen.dart';
+import '../../presentation/screens/sessions/session_detail_screen.dart';
+import '../../domain/entities/study_session.dart';
 import '../../presentation/screens/shell/main_shell_screen.dart';
 import '../../presentation/screens/splash/splash_screen.dart';
 
@@ -30,6 +32,7 @@ class AppRoutes {
   static const profileSetup = '/profile-setup';
   static const home = '/home';
   static const createSession = '/create-session';
+  static const sessionDetail = '/session';
   static const chatRoom = '/chat';
   static const rating = '/rating';
   static const profile = '/profile';
@@ -136,6 +139,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.createSession,
         builder: (_, __) => const CreateSessionScreen(),
+      ),
+      GoRoute(
+        path: '${AppRoutes.sessionDetail}/:sessionId',
+        builder: (context, state) {
+          final id = state.pathParameters['sessionId']!;
+          final initial = state.extra is StudySession ? state.extra as StudySession : null;
+          return SessionDetailScreen(sessionId: id, initialSession: initial);
+        },
       ),
       GoRoute(
         path: '${AppRoutes.chatRoom}/:sessionId',

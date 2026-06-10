@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/profile_image_helper.dart';
 import '../../domain/entities/session_member_role.dart';
 
 class UserAvatar extends StatelessWidget {
@@ -11,23 +12,45 @@ class UserAvatar extends StatelessWidget {
     this.size = 36,
     this.backgroundColor,
     this.foregroundColor,
+    this.photoUrl,
   });
 
   final String initials;
   final double size;
   final Color? backgroundColor;
   final Color? foregroundColor;
+  final String? photoUrl;
 
   @override
   Widget build(BuildContext context) {
+    final provider = ProfileImageHelper.imageProvider(photoUrl);
+
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         color: backgroundColor ?? AppColors.primaryTint,
         shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: provider != null ? 0.9 : 0),
+          width: 2,
+        ),
       ),
-      alignment: Alignment.center,
+      clipBehavior: Clip.antiAlias,
+      child: provider != null
+          ? Image(
+              image: provider,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _initials(),
+            )
+          : _initials(),
+    );
+  }
+
+  Widget _initials() {
+    return Center(
       child: Text(
         initials,
         style: GoogleFonts.inter(
@@ -115,6 +138,7 @@ class SessionCard extends StatelessWidget {
     this.distanceKm,
     this.isActiveNow = false,
     this.memberRole = SessionMemberRole.none,
+    this.onTap,
     this.onJoin,
     this.onOpenChat,
     this.onReport,
@@ -128,6 +152,7 @@ class SessionCard extends StatelessWidget {
   final double? distanceKm;
   final bool isActiveNow;
   final SessionMemberRole memberRole;
+  final VoidCallback? onTap;
   final VoidCallback? onJoin;
   final VoidCallback? onOpenChat;
   final VoidCallback? onReport;
@@ -136,7 +161,12 @@ class SessionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isParticipant = memberRole.isParticipant;
 
-    return Container(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
@@ -182,23 +212,24 @@ class SessionCard extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  creatorName,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
+                                  subject,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
                                     color: AppColors.text1,
                                   ),
                                 ),
-                                if (subtitle.isNotEmpty)
-                                  Text(
-                                    subtitle,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 11,
-                                      color: AppColors.text3,
-                                    ),
+                                Text(
+                                  subtitle.isNotEmpty
+                                      ? subtitle
+                                      : 'Par $creatorName',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: AppColors.text2,
                                   ),
+                                ),
                               ],
                             ),
                           ),
@@ -210,7 +241,10 @@ class SessionCard extends StatelessWidget {
                         spacing: 6,
                         runSpacing: 6,
                         children: [
-                          SessionChip(label: subject, variant: ChipVariant.primary),
+                          SessionChip(
+                            label: creatorName,
+                            variant: ChipVariant.primary,
+                          ),
                           if (distanceKm != null)
                             SessionChip(
                               label: '${distanceKm!.toStringAsFixed(1)} km',
@@ -248,6 +282,8 @@ class SessionCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
         ),
       ),
     );
@@ -372,38 +408,128 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
-/// En-tête dégradé réutilisable sur les onglets principaux.
+class AppBottomNav extends StatelessWidget {
+  const AppBottomNav({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
+
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const items = [
+      (Icons.explore_outlined, Icons.explore_rounded, 'Découvrir'),
+      (Icons.map_outlined, Icons.map_rounded, 'Carte'),
+      (Icons.chat_bubble_outline, Icons.chat_bubble_rounded, 'Chat'),
+      (Icons.bar_chart_outlined, Icons.bar_chart_rounded, 'Stats'),
+      (Icons.person_outline, Icons.person_rounded, 'Profil'),
+    ];
+
+    return Container(
+      color: Colors.transparent,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: SafeArea(
+        top: false,
+        child: Container(
+          height: 64,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceElevated,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.8)),
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.navShadow,
+                blurRadius: 20,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: List.generate(items.length, (i) {
+              final active = i == currentIndex;
+              return Expanded(
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => onTap(i),
+                    borderRadius: BorderRadius.circular(18),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: active ? 10 : 0,
+                            vertical: active ? 4 : 0,
+                          ),
+                          decoration: active
+                              ? BoxDecoration(
+                                  color: AppColors.primaryTint,
+                                  borderRadius: BorderRadius.circular(12),
+                                )
+                              : null,
+                          child: Icon(
+                            active ? items[i].$2 : items[i].$1,
+                            size: 22,
+                            color: active ? AppColors.primary : AppColors.text3,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          items[i].$3,
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: active ? AppColors.primary : AppColors.text3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class ScreenHeroHeader extends StatelessWidget {
   const ScreenHeroHeader({
     super.key,
-    this.eyebrow,
+    required this.eyebrow,
     required this.title,
     this.subtitle,
-    this.icon = Icons.auto_awesome,
+    required this.icon,
     this.trailing,
-    this.margin = const EdgeInsets.fromLTRB(16, 12, 16, 10),
+    this.compact = false,
   });
 
-  final String? eyebrow;
+  final String eyebrow;
   final String title;
   final String? subtitle;
   final IconData icon;
   final Widget? trailing;
-  final EdgeInsets margin;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: margin,
-      padding: const EdgeInsets.all(18),
+      margin: EdgeInsets.fromLTRB(16, compact ? 8 : 12, 16, 10),
+      padding: EdgeInsets.all(compact ? 14 : 18),
       decoration: BoxDecoration(
         gradient: AppColors.heroGradient,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.28),
+            color: AppColors.primary.withValues(alpha: 0.22),
             blurRadius: 18,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -413,74 +539,72 @@ class ScreenHeroHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (eyebrow != null) ...[
-                  Text(
-                    eyebrow!,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.85),
-                    ),
+                Text(
+                  eyebrow,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.85),
                   ),
-                  const SizedBox(height: 4),
-                ],
+                ),
+                const SizedBox(height: 4),
                 Text(
                   title,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 20,
+                    fontSize: compact ? 18 : 20,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                     height: 1.15,
                   ),
                 ),
-                if (subtitle != null) ...[
+                if (subtitle != null && subtitle!.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
                     subtitle!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.8),
+                      color: Colors.white.withValues(alpha: 0.75),
                     ),
                   ),
                 ],
               ],
             ),
           ),
-          trailing ??
-              Container(
-                padding: const EdgeInsets.all(11),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: Colors.white, size: 22),
+          if (trailing != null) trailing!,
+          if (trailing == null)
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(14),
               ),
+              child: Icon(icon, color: Colors.white, size: 22),
+            ),
         ],
       ),
     );
   }
 }
 
-/// Carte surface standard (listes, sections).
 class AppSurfaceCard extends StatelessWidget {
   const AppSurfaceCard({
     super.key,
     required this.child,
-    this.onTap,
-    this.margin,
     this.padding = const EdgeInsets.all(16),
+    this.margin = const EdgeInsets.only(bottom: 12),
     this.accentColor,
   });
 
   final Widget child;
-  final VoidCallback? onTap;
-  final EdgeInsets? margin;
-  final EdgeInsets padding;
+  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry margin;
   final Color? accentColor;
 
   @override
   Widget build(BuildContext context) {
-    final card = Container(
-      margin: margin ?? const EdgeInsets.only(bottom: 12),
+    return Container(
+      margin: margin,
       decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(16),
@@ -489,7 +613,7 @@ class AppSurfaceCard extends StatelessWidget {
           BoxShadow(
             color: AppColors.cardShadow,
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: Offset(0, 3),
           ),
         ],
       ),
@@ -501,29 +625,17 @@ class AppSurfaceCard extends StatelessWidget {
             children: [
               if (accentColor != null)
                 Container(width: 4, color: accentColor),
-              Expanded(
-                child: Padding(padding: padding, child: child),
-              ),
+              Expanded(child: Padding(padding: padding, child: child)),
             ],
           ),
         ),
       ),
     );
-
-    if (onTap == null) return card;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: card,
-      ),
-    );
   }
 }
 
-class EmptyStateView extends StatelessWidget {
-  const EmptyStateView({
+class EmptyState extends StatelessWidget {
+  const EmptyState({
     super.key,
     required this.icon,
     required this.title,
@@ -557,7 +669,7 @@ class EmptyStateView extends StatelessWidget {
               title,
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
+                fontSize: 17,
                 fontWeight: FontWeight.w700,
                 color: AppColors.text1,
               ),
@@ -567,12 +679,12 @@ class EmptyStateView extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
-                fontSize: 14,
+                fontSize: 13,
                 color: AppColors.text2,
                 height: 1.5,
               ),
             ),
-            if (action != null) ...[const SizedBox(height: 20), action!],
+            if (action != null) ...[const SizedBox(height: 16), action!],
           ],
         ),
       ),
@@ -584,158 +696,68 @@ class ChatSessionTile extends StatelessWidget {
   const ChatSessionTile({
     super.key,
     required this.initials,
-    required this.title,
+    required this.subject,
     required this.subtitle,
-    this.onTap,
-    this.onRate,
+    required this.onTap,
     this.onReport,
   });
 
   final String initials;
-  final String title;
+  final String subject;
   final String subtitle;
-  final VoidCallback? onTap;
-  final VoidCallback? onRate;
+  final VoidCallback onTap;
   final VoidCallback? onReport;
 
   @override
   Widget build(BuildContext context) {
     return AppSurfaceCard(
-      onTap: onTap,
+      margin: const EdgeInsets.only(bottom: 10),
       accentColor: AppColors.accent,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-          UserAvatar(initials: initials, size: 44),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.text1,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Row(
+          children: [
+            UserAvatar(initials: initials, size: 44),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    subject,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.text1,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.text3),
-                ),
-              ],
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.text3),
+                  ),
+                ],
+              ),
             ),
-          ),
-          if (onReport != null || onRate != null)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, size: 20, color: AppColors.text3),
-              onSelected: (value) {
-                if (value == 'report') onReport?.call();
-                if (value == 'rate') onRate?.call();
-              },
-              itemBuilder: (_) => [
-                if (onRate != null)
-                  const PopupMenuItem(
-                    value: 'rate',
-                    child: Text('Évaluer les participants'),
-                  ),
-                if (onReport != null)
-                  const PopupMenuItem(
+            if (onReport != null)
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 20, color: AppColors.text3),
+                onSelected: (v) {
+                  if (v == 'report') onReport!();
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
                     value: 'report',
                     child: Text('Signaler la session'),
                   ),
-              ],
-            )
-          else
-            const Icon(Icons.chevron_right, color: AppColors.text3, size: 22),
-        ],
-      ),
-    );
-  }
-}
-
-class AppBottomNav extends StatelessWidget {
-  const AppBottomNav({
-    super.key,
-    required this.currentIndex,
-    required this.onTap,
-  });
-
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    const items = [
-      (Icons.explore_outlined, Icons.explore_rounded, 'Découvrir'),
-      (Icons.map_outlined, Icons.map_rounded, 'Carte'),
-      (Icons.chat_bubble_outline, Icons.chat_bubble_rounded, 'Chat'),
-      (Icons.bar_chart_outlined, Icons.bar_chart_rounded, 'Stats'),
-      (Icons.person_outline, Icons.person_rounded, 'Profil'),
-    ];
-
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-        child: Container(
-          height: 64,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceElevated,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: AppColors.border),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.cardShadow,
-                blurRadius: 20,
-                offset: Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Row(
-            children: List.generate(items.length, (i) {
-              final active = i == currentIndex;
-              return Expanded(
-                child: InkWell(
-                  onTap: () => onTap(i),
-                  borderRadius: BorderRadius.circular(18),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: active
-                          ? AppColors.primaryTint
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          active ? items[i].$2 : items[i].$1,
-                          size: 22,
-                          color: active ? AppColors.primary : AppColors.text3,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          items[i].$3,
-                          style: GoogleFonts.inter(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                            color: active ? AppColors.primary : AppColors.text3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
+                ],
+              )
+            else
+              const Icon(Icons.chevron_right, color: AppColors.text3),
+          ],
         ),
       ),
     );
@@ -770,40 +792,27 @@ class StatCard extends StatelessWidget {
           BoxShadow(
             color: AppColors.cardShadow,
             blurRadius: 8,
-            offset: Offset(0, 3),
+            offset: Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              if (icon != null)
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, size: 16, color: accent),
-                ),
-              if (icon != null) const Spacer(),
-              Container(
-                width: 24,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: accent,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+          if (icon != null)
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
               ),
-            ],
-          ),
-          const Spacer(),
+              child: Icon(icon, size: 16, color: accent),
+            ),
+          if (icon != null) const Spacer(),
           Text(
             value,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 24,
+              fontSize: 22,
               fontWeight: FontWeight.w800,
               color: accent,
             ),

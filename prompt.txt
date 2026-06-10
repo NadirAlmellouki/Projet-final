@@ -1,0 +1,5 @@
+vérifier le fichier study_sync_spec(1).md et vérifier est ce que le signale se fait pour la session ou bien un utilisateur oou bien les et d'après lefichier corriger l'application coté front-end si il n'y a ke même fonctionement
+après évaluer un utilisateur on trouve que le même utilisateur aparaitre après pour l'evaluer alors qu'il est déjà évaluer par moi 
+vérifier la zone de maps où les session sont sont afficher dans découvrir est ce qu'il est la même avec la zone d'aparaitre dans la carte et est ce qu'il est la même dans le moment de création d'un session lors de choisir un lieu de session
+vérifier le 1ere affichage des session dans decouvrir car le 1ére affichage après connexion affiche tous les session alors il doit s'affiche seulement les session approche 
+attention de modifier quelque chose important de back-end car tous les endpoints sont bien créer , si le cas vous devez me reclamer avant

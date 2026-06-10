@@ -5,12 +5,10 @@ import '../../application/services/auth_service.dart';
 import '../../application/services/google_auth_service.dart';
 import '../../core/storage/token_storage.dart';
 import '../../data/repositories/auth_repository_impl.dart';
-import '../../data/repositories/rating_repository_impl.dart';
 import '../../data/repositories/report_repository_impl.dart';
 import '../../data/repositories/session_repository_impl.dart';
 import '../../data/repositories/user_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../../domain/repositories/rating_repository.dart';
 import '../../domain/repositories/report_repository.dart';
 import '../../domain/repositories/session_repository.dart';
 
@@ -53,8 +51,4 @@ final statsRepositoryProvider = Provider<StatsRepository>((ref) {
 
 final reportRepositoryProvider = Provider<ReportRepository>((ref) {
   return ReportRepositoryImpl(api: ref.watch(apiServiceProvider));
-});
-
-final ratingRepositoryProvider = Provider<RatingRepository>((ref) {
-  return RatingRepositoryImpl(api: ref.watch(apiServiceProvider));
 });

@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../domain/entities/study_session.dart';
 import '../../providers/home_provider.dart';
+import '../sessions/session_detail_screen.dart';
 import '../../widgets/report_sheet.dart';
 import '../../widgets/studysync_widgets.dart';
 
@@ -36,12 +36,10 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ScreenHeroHeader(
+            const ScreenHeroHeader(
               eyebrow: 'Messagerie',
               title: 'Vos conversations',
-              subtitle: state.sessions.isEmpty
-                  ? 'Rejoignez une session pour discuter'
-                  : '${state.sessions.length} session(s) active(s)',
+              subtitle: 'Sessions rejointes ou créées',
               icon: Icons.chat_bubble_rounded,
             ),
             Expanded(
@@ -50,7 +48,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                       child: CircularProgressIndicator(color: AppColors.primary),
                     )
                   : state.sessions.isEmpty
-                      ? EmptyStateView(
+                      ? EmptyState(
                           icon: Icons.forum_outlined,
                           title: 'Aucune conversation',
                           message: state.errorMessage ??
@@ -58,16 +56,14 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                         )
                       : RefreshIndicator(
                           color: AppColors.primary,
-                          onRefresh: () =>
-                              ref.read(chatListProvider.notifier).load(),
+                          onRefresh: () => ref.read(chatListProvider.notifier).load(),
                           child: ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
                             itemCount: state.sessions.length,
                             itemBuilder: (context, index) {
                               final s = state.sessions[index];
                               final subtitle = [
-                                if (s.locationName != null &&
-                                    s.locationName!.isNotEmpty)
+                                if (s.locationName != null && s.locationName!.isNotEmpty)
                                   s.locationName,
                                 if (s.startTime != null)
                                   DateFormat('dd/MM HH:mm').format(s.startTime!),
@@ -76,18 +72,9 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
                               return ChatSessionTile(
                                 initials: s.creatorInitials,
-                                title: s.subject,
-                                subtitle: _sessionSubtitle(s, subtitle),
-                                onTap: () => context.push(
-                                  '${AppRoutes.chatRoom}/${s.id}',
-                                  extra: s.subject,
-                                ),
-                                onRate: s.isEnded
-                                    ? () => context.push(
-                                          '${AppRoutes.rating}/${s.id}',
-                                          extra: s.subject,
-                                        )
-                                    : null,
+                                subject: s.subject,
+                                subtitle: subtitle,
+                                onTap: () => openSessionDetail(context, s),
                                 onReport: () async {
                                   final sent = await ReportSheet.show(
                                     context,
@@ -113,10 +100,5 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
         ),
       ),
     );
-  }
-
-  String _sessionSubtitle(StudySession session, String base) {
-    if (session.isEnded) return '$base · À évaluer';
-    return base;
   }
 }

@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/profile_photo_picker.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -23,6 +24,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   int _year = 3;
   bool _isSaving = false;
   String? _error;
+  String? _photoUrl;
 
   static const _yearOptions = {
     1: 'L1',
@@ -63,6 +65,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         'major': _majorCtrl.text.trim(),
         'year': _year,
         if (_bioCtrl.text.trim().isNotEmpty) 'bio': _bioCtrl.text.trim(),
+        if (_photoUrl != null) 'profile_photo': _photoUrl,
       });
       ref.read(authProvider.notifier).setUser(updated);
       if (mounted) context.go(AppRoutes.home);
@@ -115,20 +118,11 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               child: Column(
                 children: [
                   if (_error != null) ErrorBanner(message: _error!),
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryTint,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFC7D2FE), width: 3),
-                    ),
-                    child: const Icon(Icons.add, color: AppColors.primary, size: 28),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Ajouter une photo de profil',
-                    style: TextStyle(fontSize: 12, color: AppColors.text3),
+                  ProfilePhotoPicker(
+                    initials: ref.watch(authProvider).user?.initials ?? 'U',
+                    photoUrl: _photoUrl,
+                    isLoading: _isSaving,
+                    onPhotoSelected: (url) => setState(() => _photoUrl = url),
                   ),
                   const SizedBox(height: 20),
                   const Align(

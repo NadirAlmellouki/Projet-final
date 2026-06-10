@@ -58,6 +58,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
+      extendBody: true,
       body: IndexedStack(index: _index, children: _screens),
       bottomNavigationBar: AppBottomNav(
         currentIndex: _index,

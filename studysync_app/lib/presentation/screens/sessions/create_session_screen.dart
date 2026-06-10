@@ -9,6 +9,7 @@ import '../../../domain/entities/create_session_request.dart';
 import '../../providers/app_providers.dart';
 import '../../providers/home_provider.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/studysync_widgets.dart';
 
 class CreateSessionScreen extends ConsumerStatefulWidget {
   const CreateSessionScreen({super.key});
@@ -208,15 +209,46 @@ class _CreateSessionScreenState extends ConsumerState<CreateSessionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Créer une session')),
+      backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        title: const Text('Créer une session'),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: AppColors.heroGradient),
+        ),
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (_error != null) ErrorBanner(message: _error!),
+              AppSurfaceCard(
+                margin: const EdgeInsets.only(bottom: 16),
+                accentColor: AppColors.primary,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryTint,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.add_circle_outline, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Publie une session pour trouver des partenaires près de toi.',
+                        style: TextStyle(fontSize: 13, color: AppColors.text2, height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const InputLabel('Matière *'),
               TextFormField(
                 controller: _subjectCtrl,
